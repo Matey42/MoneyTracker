@@ -1,8 +1,9 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, type PaletteMode } from '@mui/material/styles';
 
-export const theme = createTheme({
+// Design tokens that work for both modes
+const getDesignTokens = (mode: PaletteMode) => ({
   palette: {
-    mode: 'light',
+    mode,
     primary: {
       main: '#2563eb',
       light: '#60a5fa',
@@ -31,13 +32,14 @@ export const theme = createTheme({
       dark: '#d97706',
     },
     background: {
-      default: '#f8fafc',
-      paper: '#ffffff',
+      default: mode === 'light' ? '#f8fafc' : '#0f172a',
+      paper: mode === 'light' ? '#ffffff' : '#1e293b',
     },
     text: {
-      primary: '#1e293b',
-      secondary: '#64748b',
+      primary: mode === 'light' ? '#1e293b' : '#f1f5f9',
+      secondary: mode === 'light' ? '#64748b' : '#94a3b8',
     },
+    divider: mode === 'light' ? '#e2e8f0' : '#334155',
   },
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
@@ -66,7 +68,7 @@ export const theme = createTheme({
       fontSize: '0.875rem',
     },
     button: {
-      textTransform: 'none',
+      textTransform: 'none' as const,
       fontWeight: 600,
     },
   },
@@ -91,7 +93,9 @@ export const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          boxShadow: mode === 'light' 
+            ? '0 1px 3px rgba(0,0,0,0.1)' 
+            : '0 1px 3px rgba(0,0,0,0.3)',
           borderRadius: 16,
         },
       },
@@ -112,5 +116,24 @@ export const theme = createTheme({
         },
       },
     },
+    MuiDrawer: {
+      styleOverrides: {
+        paper: {
+          borderRight: mode === 'light' ? '1px solid #e2e8f0' : '1px solid #334155',
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none',
+        },
+      },
+    },
   },
 });
+
+export const createAppTheme = (mode: PaletteMode) => createTheme(getDesignTokens(mode));
+
+// Default light theme for backwards compatibility
+export const theme = createAppTheme('light');

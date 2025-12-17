@@ -18,6 +18,7 @@ import {
   Divider,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -28,9 +29,12 @@ import {
   Settings as SettingsIcon,
   Logout as LogoutIcon,
   Person as PersonIcon,
+  DarkMode as DarkModeIcon,
+  LightMode as LightModeIcon,
 } from '@mui/icons-material';
 import { useAppSelector, useAppDispatch } from '../hooks/useAppStore';
 import { logout } from '../features/auth/authSlice';
+import { useColorMode } from '../contexts/ColorModeContext';
 
 const DRAWER_WIDTH = 260;
 
@@ -47,6 +51,7 @@ interface MainLayoutProps {
 
 const MainLayout = ({ children }: MainLayoutProps) => {
   const theme = useTheme();
+  const { mode, toggleColorMode } = useColorMode();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   const location = useLocation();
@@ -169,6 +174,12 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           </Typography>
 
           <Box sx={{ flex: 1 }} />
+
+          <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+            <IconButton onClick={toggleColorMode} sx={{ mr: 1 }}>
+              {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+            </IconButton>
+          </Tooltip>
 
           <IconButton onClick={handleMenuOpen}>
             <Avatar sx={{ bgcolor: 'primary.main', width: 36, height: 36 }}>
