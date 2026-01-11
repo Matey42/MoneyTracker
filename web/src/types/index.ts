@@ -2,11 +2,164 @@
 export interface User {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  isActive: boolean;
+  firstName: string | null;
+  lastName: string | null;
+}
+
+// Wallet types
+export type WalletCategory = 'CASH' | 'BANK' | 'INVESTMENTS' | 'CRYPTO' | 'REAL_ESTATE' | 'OTHER';
+
+export interface Wallet {
+  id: string;
+  name: string;
+  type: WalletCategory;
+  currency: string;
+  
+  // For CASH/BANK: sum of transactions
+  // For INVESTMENTS/CRYPTO/REAL_ESTATE: total market value of holdings
+  balance: number;
+
+  // Sharing
+  isShared: boolean;
+  memberCount?: number;
+  isOwner: boolean;
+
+  // Optional fields
+  description?: string;
+  icon?: string;
+  color?: string;
   createdAt: string;
 }
+
+// TODO in feature: Holding types for INVESTMENTS/CRYPTO wallets
+
+export interface CreateWalletRequest {
+  name: string;
+  type: WalletCategory;
+
+  currency?: string; // default to user's primary currency
+  isShared?: boolean; // default false
+  description?: string;
+  icon?: string;
+  color?: string;
+}
+
+// Member types
+export type MemberRole = 'OWNER' | 'MEMBER' | 'VIEWER';
+
+export interface WalletMember {
+  id: string;
+  userId: string;
+  email: string;
+  
+  displayName?: string;
+  role: MemberRole;
+  joinedAt: string;
+}
+
+export interface InviteMemberRequest {
+  email: string;
+  role: MemberRole; // DEFAULT: MEMBER
+}
+
+// Category types
+export type CategoryType = 'INCOME' | 'EXPENSE';
+
+export interface Category {
+  id: string;
+  name: string;
+  type: CategoryType;
+
+  icon?: string;
+  color?: string;
+}
+
+// Transaction types
+export type TransactionType = 'INCOME' | 'EXPENSE' | 'TRANSFER';
+// TODO in feature: Add transsaction for holdings (BUY/SELL/DIVIDEND)
+
+export interface Transaction {
+  id: string;
+  walletId: string;
+  type: TransactionType;
+  amount: number;
+  currency: string;
+
+  // If type === TRANSFER, where did it go/come from?
+  relatedWalletId?: string; 
+
+  // For shared wallets
+  createdBy?:{
+    userId: string;
+    displayName: string;
+  };
+
+  // Optional fields
+  categoryId?: string; // predefined category
+  description?: string;
+
+  transactionDate: string;
+}
+
+export interface CreateTransactionRequest {
+  walletId: string;
+  type: TransactionType;
+  amount: number;
+
+  // Optional
+  categoryId?: string;
+  description?: string;
+  
+  // Only for Transfers
+  targetWalletId?: string;
+}
+
+// Liability types
+export type LiabilityType = 'LOAN' | 'MORTGAGE' | 'PERSONAL_DEBT';
+
+export interface Liability {
+  id: string;
+  name: string;
+  type: LiabilityType;
+  principalAmount: number;
+  currentBalance: number;
+  interestRate?: number;
+  minimumPayment?: number;
+  dueDate?: number;
+  currency: string;
+  startDate?: string;
+  endDate?: string;
+  isActive: boolean;
+  notes?: string;
+  createdAt: string;
+}
+
+
+// Dashboard types
+export interface DashboardData {
+  totalBalance: number;
+  monthlyIncome: number;
+  monthlyExpense: number;
+  wallets: Wallet[];
+  recentTransactions: Transaction[];
+  categoryBreakdown: CategoryBreakdown[];
+}
+
+export interface CategoryBreakdown {
+  categoryId: string;
+  categoryName: string;
+  categoryColor: string;
+  amount: number;
+  percentage: number;
+}
+
+// API Response types
+export interface ApiError {
+  message: string;
+  status: number;
+  errors?: Record<string, string[]>;
+}
+
 
 // Auth types
 export interface AuthState {
@@ -33,129 +186,4 @@ export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
   user: User;
-}
-
-// Wallet types
-export type WalletType = 'PERSONAL' | 'FAMILY' | 'BUSINESS' | 'SAVINGS' | 'CASH';
-
-export interface Wallet {
-  id: string;
-  name: string;
-  type: WalletType;
-  currency: string;
-  description?: string;
-  icon?: string;
-  color?: string;
-  balance: number;
-  isOwner: boolean;
-  createdAt: string;
-}
-
-export interface CreateWalletRequest {
-  name: string;
-  type: WalletType;
-  currency?: string;
-  description?: string;
-  icon?: string;
-  color?: string;
-}
-
-// Transaction types
-export type TransactionType = 'INCOME' | 'EXPENSE';
-
-export interface Transaction {
-  id: string;
-  walletId: string;
-  userId: string;
-  categoryId?: string;
-  categoryName?: string;
-  categoryIcon?: string;
-  categoryColor?: string;
-  type: TransactionType;
-  amount: number;
-  currency: string;
-  description?: string;
-  transactionDate: string;
-  paymentMethod?: string;
-  createdAt: string;
-}
-
-export interface CreateTransactionRequest {
-  walletId: string;
-  categoryId?: string;
-  type: TransactionType;
-  amount: number;
-  description?: string;
-  transactionDate: string;
-  paymentMethod?: string;
-}
-
-// Category types
-export type CategoryType = 'INCOME' | 'EXPENSE';
-
-export interface Category {
-  id: string;
-  name: string;
-  type: CategoryType;
-  icon?: string;
-  color?: string;
-  isSystem: boolean;
-}
-
-// Liability types
-export type LiabilityType = 'LOAN' | 'CREDIT_CARD' | 'MORTGAGE' | 'PERSONAL_DEBT';
-
-export interface Liability {
-  id: string;
-  name: string;
-  type: LiabilityType;
-  principalAmount: number;
-  currentBalance: number;
-  interestRate?: number;
-  minimumPayment?: number;
-  dueDate?: number;
-  currency: string;
-  startDate?: string;
-  endDate?: string;
-  isActive: boolean;
-  notes?: string;
-  createdAt: string;
-}
-
-// Member types
-export type MemberRole = 'OWNER' | 'MEMBER';
-
-export interface WalletMember {
-  id: string;
-  userId: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: MemberRole;
-  grantedAt: string;
-}
-
-// Dashboard types
-export interface DashboardData {
-  totalBalance: number;
-  monthlyIncome: number;
-  monthlyExpense: number;
-  wallets: Wallet[];
-  recentTransactions: Transaction[];
-  categoryBreakdown: CategoryBreakdown[];
-}
-
-export interface CategoryBreakdown {
-  categoryId: string;
-  categoryName: string;
-  categoryColor: string;
-  amount: number;
-  percentage: number;
-}
-
-// API Response types
-export interface ApiError {
-  message: string;
-  status: number;
-  errors?: Record<string, string[]>;
 }
