@@ -23,7 +23,8 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../hooks/useAppStore';
-import { formatCurrency, formatDate, getWalletTypeColor } from '../utils/formatters';
+import { formatCurrency, formatDate } from '../utils/formatters';
+import { getWalletColor, getWalletLabel } from '../utils/walletConfig';
 import type { DashboardData, Transaction, Wallet } from '../types';
 
 // Mock data for development
@@ -32,16 +33,16 @@ const mockDashboardData: DashboardData = {
   monthlyIncome: 8500.00,
   monthlyExpense: 4230.75,
   wallets: [
-    { id: '1', name: 'Personal Account', type: 'PERSONAL', currency: 'PLN', balance: 8500.50, isOwner: true, createdAt: '2024-01-01' },
-    { id: '2', name: 'Family Budget', type: 'FAMILY', currency: 'PLN', balance: 4200.00, isOwner: true, createdAt: '2024-01-15' },
-    { id: '3', name: 'Savings', type: 'SAVINGS', currency: 'PLN', balance: 2720.00, isOwner: true, createdAt: '2024-02-01' },
+    { id: '1', name: 'Personal Account', type: 'BANK', currency: 'PLN', balance: 8500.50, isOwner: true, isShared: false, createdAt: '2024-01-01' },
+    { id: '2', name: 'Family Budget', type: 'BANK', currency: 'PLN', balance: 4200.00, isOwner: true, isShared: true, memberCount: 3, createdAt: '2024-01-15' },
+    { id: '3', name: 'Savings', type: 'BANK', currency: 'PLN', balance: 2720.00, isOwner: true, isShared: false, createdAt: '2024-02-01' },
   ],
   recentTransactions: [
-    { id: '1', walletId: '1', userId: '1', type: 'EXPENSE', amount: 125.50, currency: 'PLN', description: 'Groceries', categoryName: 'Groceries', categoryIcon: 'shopping_cart', categoryColor: '#FF9800', transactionDate: '2024-12-13', createdAt: '2024-12-13' },
-    { id: '2', walletId: '1', userId: '1', type: 'INCOME', amount: 5000.00, currency: 'PLN', description: 'Salary', categoryName: 'Salary', categoryIcon: 'work', categoryColor: '#4CAF50', transactionDate: '2024-12-10', createdAt: '2024-12-10' },
-    { id: '3', walletId: '2', userId: '1', type: 'EXPENSE', amount: 89.99, currency: 'PLN', description: 'Netflix subscription', categoryName: 'Entertainment', categoryIcon: 'movie', categoryColor: '#9C27B0', transactionDate: '2024-12-09', createdAt: '2024-12-09' },
-    { id: '4', walletId: '1', userId: '1', type: 'EXPENSE', amount: 450.00, currency: 'PLN', description: 'Electric bill', categoryName: 'Bills & Utilities', categoryIcon: 'receipt', categoryColor: '#607D8B', transactionDate: '2024-12-08', createdAt: '2024-12-08' },
-    { id: '5', walletId: '3', userId: '1', type: 'INCOME', amount: 500.00, currency: 'PLN', description: 'Transfer to savings', categoryName: 'Other Income', categoryIcon: 'attach_money', categoryColor: '#9C27B0', transactionDate: '2024-12-05', createdAt: '2024-12-05' },
+    { id: '1', walletId: '1', type: 'EXPENSE', amount: 125.50, currency: 'PLN', description: 'Groceries', categoryId: 'groceries', transactionDate: '2024-12-13' },
+    { id: '2', walletId: '1', type: 'INCOME', amount: 5000.00, currency: 'PLN', description: 'Salary', categoryId: 'salary', transactionDate: '2024-12-10' },
+    { id: '3', walletId: '2', type: 'EXPENSE', amount: 89.99, currency: 'PLN', description: 'Netflix subscription', categoryId: 'entertainment', transactionDate: '2024-12-09' },
+    { id: '4', walletId: '1', type: 'EXPENSE', amount: 450.00, currency: 'PLN', description: 'Electric bill', categoryId: 'bills', transactionDate: '2024-12-08' },
+    { id: '5', walletId: '3', type: 'INCOME', amount: 500.00, currency: 'PLN', description: 'Transfer to savings', categoryId: 'transfer', transactionDate: '2024-12-05' },
   ],
   categoryBreakdown: [
     { categoryId: '1', categoryName: 'Groceries', categoryColor: '#FF9800', amount: 850.00, percentage: 35 },
@@ -197,13 +198,13 @@ const DashboardPage = () => {
                     onClick={() => navigate(`/wallets/${wallet.id}`)}
                   >
                     <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: getWalletTypeColor(wallet.type) }}>
+                      <Avatar sx={{ bgcolor: getWalletColor(wallet.type) }}>
                         <WalletIcon />
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText
                       primary={wallet.name}
-                      secondary={wallet.type}
+                      secondary={getWalletLabel(wallet.type)}
                     />
                     <Typography variant="subtitle1" fontWeight={600}>
                       {formatCurrency(wallet.balance, wallet.currency)}
@@ -251,16 +252,12 @@ const DashboardPage = () => {
                     }}
                   >
                     <ListItemAvatar>
-                      <Avatar
-                        sx={{
-                          bgcolor: transaction.categoryColor || (transaction.type === 'INCOME' ? '#10b981' : '#ef4444'),
-                        }}
-                      >
+                      <Avatar sx={{ bgcolor: transaction.type === 'INCOME' ? '#10b981' : '#ef4444' }}>
                         {transaction.type === 'INCOME' ? <IncomeIcon /> : <ExpenseIcon />}
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText
-                      primary={transaction.description || transaction.categoryName}
+                      primary={transaction.description || transaction.categoryId}
                       secondary={formatDate(transaction.transactionDate)}
                     />
                     <Box sx={{ textAlign: 'right' }}>
@@ -273,7 +270,7 @@ const DashboardPage = () => {
                         {formatCurrency(transaction.amount, transaction.currency)}
                       </Typography>
                       <Chip
-                        label={transaction.categoryName}
+                        label={transaction.categoryId || 'Uncategorized'}
                         size="small"
                         sx={{ fontSize: '0.7rem', height: 20 }}
                       />

@@ -88,11 +88,10 @@ export interface Transaction {
   // If type === TRANSFER, where did it go/come from?
   relatedWalletId?: string; 
 
+  userId: string;
+  
   // For shared wallets
-  createdBy?:{
-    userId: string;
-    displayName: string;
-  };
+  displayName?: string;
 
   // Optional fields
   categoryId?: string; // predefined category

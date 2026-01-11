@@ -33,25 +33,27 @@ import {
   ExitToApp as LeaveIcon,
   People as PeopleIcon,
 } from '@mui/icons-material';
-import type { Wallet, WalletType } from '../types';
-import { formatCurrency, getWalletTypeLabel, getWalletTypeColor } from '../utils/formatters';
+import type { Wallet, WalletCategory } from '../types';
+import { formatCurrency } from '../utils/formatters';
+import { getWalletLabel, getWalletColor } from '../utils/walletConfig';
 
 // Mock data
 const mockWallets: Wallet[] = [
-  { id: '1', name: 'Personal Account', type: 'PERSONAL', currency: 'PLN', balance: 8500.50, isOwner: true, createdAt: '2024-01-01', description: 'My main checking account' },
-  { id: '2', name: 'Family Budget', type: 'FAMILY', currency: 'PLN', balance: 4200.00, isOwner: true, createdAt: '2024-01-15', description: 'Shared family expenses' },
-  { id: '3', name: 'Emergency Savings', type: 'SAVINGS', currency: 'PLN', balance: 15000.00, isOwner: true, createdAt: '2024-02-01' },
-  { id: '4', name: 'Vacation Fund', type: 'SAVINGS', currency: 'PLN', balance: 2720.00, isOwner: true, createdAt: '2024-03-01' },
-  { id: '5', name: 'Business Account', type: 'BUSINESS', currency: 'PLN', balance: 12500.00, isOwner: true, createdAt: '2024-04-01' },
-  { id: '6', name: 'Shared Apartment', type: 'FAMILY', currency: 'PLN', balance: 800.00, isOwner: false, createdAt: '2024-05-01' },
+  { id: '1', name: 'Personal Account', type: 'BANK', currency: 'PLN', balance: 8500.5, isOwner: true, isShared: false, createdAt: '2024-01-01', description: 'My main checking account' },
+  { id: '2', name: 'Family Budget', type: 'BANK', currency: 'PLN', balance: 4200.0, isOwner: true, isShared: true, memberCount: 3, createdAt: '2024-01-15', description: 'Shared family expenses' },
+  { id: '3', name: 'Emergency Savings', type: 'BANK', currency: 'PLN', balance: 15000.0, isOwner: true, isShared: false, createdAt: '2024-02-01' },
+  { id: '4', name: 'Vacation Fund', type: 'BANK', currency: 'PLN', balance: 2720.0, isOwner: true, isShared: false, createdAt: '2024-03-01' },
+  { id: '5', name: 'Business Account', type: 'BANK', currency: 'PLN', balance: 12500.0, isOwner: true, isShared: false, createdAt: '2024-04-01' },
+  { id: '6', name: 'Shared Apartment', type: 'BANK', currency: 'PLN', balance: 800.0, isOwner: false, isShared: true, memberCount: 2, createdAt: '2024-05-01' },
 ];
 
-const walletTypes: { value: WalletType; label: string }[] = [
-  { value: 'PERSONAL', label: 'Personal' },
-  { value: 'FAMILY', label: 'Family' },
-  { value: 'BUSINESS', label: 'Business' },
-  { value: 'SAVINGS', label: 'Savings' },
+const walletTypes: { value: WalletCategory; label: string }[] = [
+  { value: 'BANK', label: 'Bank Account' },
   { value: 'CASH', label: 'Cash' },
+  { value: 'INVESTMENTS', label: 'Investments' },
+  { value: 'CRYPTO', label: 'Crypto' },
+  { value: 'REAL_ESTATE', label: 'Real Estate' },
+  { value: 'OTHER', label: 'Other' },
 ];
 
 const WalletsPage = () => {
@@ -62,7 +64,7 @@ const WalletsPage = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newWallet, setNewWallet] = useState({
     name: '',
-    type: 'PERSONAL' as WalletType,
+    type: 'BANK' as WalletCategory,
     description: '',
   });
 
@@ -92,12 +94,13 @@ const WalletsPage = () => {
       currency: 'PLN',
       balance: 0,
       isOwner: true,
+      isShared: false,
       createdAt: new Date().toISOString(),
       description: newWallet.description,
     };
     setWallets([...wallets, wallet]);
     setCreateDialogOpen(false);
-    setNewWallet({ name: '', type: 'PERSONAL', description: '' });
+    setNewWallet({ name: '', type: 'BANK', description: '' });
   };
 
   const handleDeleteWallet = () => {
@@ -168,7 +171,7 @@ const WalletsPage = () => {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                     <Avatar
                       sx={{
-                        bgcolor: getWalletTypeColor(wallet.type),
+                        bgcolor: getWalletColor(wallet.type),
                         width: 48,
                         height: 48,
                       }}
@@ -190,11 +193,11 @@ const WalletsPage = () => {
 
                   <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                     <Chip
-                      label={getWalletTypeLabel(wallet.type)}
+                      label={getWalletLabel(wallet.type)}
                       size="small"
                       sx={{
-                        bgcolor: `${getWalletTypeColor(wallet.type)}20`,
-                        color: getWalletTypeColor(wallet.type),
+                        bgcolor: `${getWalletColor(wallet.type)}20`,
+                        color: getWalletColor(wallet.type),
                         fontWeight: 600,
                       }}
                     />
@@ -320,7 +323,7 @@ const WalletsPage = () => {
             <Select
               value={newWallet.type}
               label="Type"
-              onChange={(e) => setNewWallet({ ...newWallet, type: e.target.value as WalletType })}
+              onChange={(e) => setNewWallet({ ...newWallet, type: e.target.value as WalletCategory })}
             >
               {walletTypes.map((type) => (
                 <MenuItem key={type.value} value={type.value}>

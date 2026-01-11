@@ -43,32 +43,38 @@ import { formatCurrency, formatDate } from '../utils/formatters';
 
 // Mock wallets data
 const mockWallets: Wallet[] = [
-  { id: '1', name: 'Personal Account', type: 'PERSONAL', currency: 'PLN', balance: 8500.50, isOwner: true, createdAt: '2024-01-01' },
-  { id: '2', name: 'Family Budget', type: 'FAMILY', currency: 'PLN', balance: 4200.00, isOwner: true, createdAt: '2024-01-15' },
-  { id: '3', name: 'Emergency Savings', type: 'SAVINGS', currency: 'PLN', balance: 15000.00, isOwner: true, createdAt: '2024-02-01' },
+  { id: '1', name: 'Personal Account', type: 'BANK', currency: 'PLN', balance: 8500.5, isOwner: true, isShared: false, createdAt: '2024-01-01' },
+  { id: '2', name: 'Family Budget', type: 'BANK', currency: 'PLN', balance: 4200.0, isOwner: true, isShared: false, createdAt: '2024-01-15' },
+  { id: '3', name: 'Emergency Savings', type: 'BANK', currency: 'PLN', balance: 15000.0, isOwner: true, isShared: false, createdAt: '2024-02-01' },
 ];
 
-// Mock data
-const mockTransactions: Transaction[] = [
-  { id: '1', walletId: '1', userId: '1', type: 'EXPENSE', amount: 125.50, currency: 'PLN', description: 'Weekly groceries at Biedronka', categoryId: '1', categoryName: 'Groceries', categoryIcon: 'shopping_cart', categoryColor: '#FF9800', transactionDate: '2024-12-13', paymentMethod: 'Card', createdAt: '2024-12-13' },
-  { id: '2', walletId: '1', userId: '1', type: 'INCOME', amount: 5000.00, currency: 'PLN', description: 'Monthly salary', categoryId: '2', categoryName: 'Salary', categoryIcon: 'work', categoryColor: '#4CAF50', transactionDate: '2024-12-10', paymentMethod: 'Transfer', createdAt: '2024-12-10' },
-  { id: '3', walletId: '2', userId: '1', type: 'EXPENSE', amount: 89.99, currency: 'PLN', description: 'Netflix subscription', categoryId: '3', categoryName: 'Entertainment', categoryIcon: 'movie', categoryColor: '#9C27B0', transactionDate: '2024-12-09', paymentMethod: 'Card', createdAt: '2024-12-09' },
-  { id: '4', walletId: '1', userId: '1', type: 'EXPENSE', amount: 450.00, currency: 'PLN', description: 'Electric bill December', categoryId: '4', categoryName: 'Bills & Utilities', categoryIcon: 'receipt', categoryColor: '#607D8B', transactionDate: '2024-12-08', paymentMethod: 'Transfer', createdAt: '2024-12-08' },
-  { id: '5', walletId: '3', userId: '1', type: 'INCOME', amount: 500.00, currency: 'PLN', description: 'Transfer to savings', categoryId: '5', categoryName: 'Other Income', categoryIcon: 'attach_money', categoryColor: '#9C27B0', transactionDate: '2024-12-05', paymentMethod: 'Transfer', createdAt: '2024-12-05' },
-  { id: '6', walletId: '1', userId: '1', type: 'EXPENSE', amount: 65.00, currency: 'PLN', description: 'Uber rides', categoryId: '6', categoryName: 'Transport', categoryIcon: 'directions_car', categoryColor: '#2196F3', transactionDate: '2024-12-04', paymentMethod: 'Card', createdAt: '2024-12-04' },
-  { id: '7', walletId: '1', userId: '1', type: 'EXPENSE', amount: 180.00, currency: 'PLN', description: 'Restaurant dinner', categoryId: '7', categoryName: 'Food & Dining', categoryIcon: 'restaurant', categoryColor: '#FF5722', transactionDate: '2024-12-03', paymentMethod: 'Card', createdAt: '2024-12-03' },
-  { id: '8', walletId: '1', userId: '1', type: 'INCOME', amount: 250.00, currency: 'PLN', description: 'Freelance project', categoryId: '8', categoryName: 'Freelance', categoryIcon: 'laptop', categoryColor: '#8BC34A', transactionDate: '2024-12-02', paymentMethod: 'Transfer', createdAt: '2024-12-02' },
-];
-
+// Mock categories (keep minimal fields matching `Category` type)
 const mockCategories: Category[] = [
-  { id: '1', name: 'Groceries', type: 'EXPENSE', icon: 'shopping_cart', color: '#FF9800', isSystem: true },
-  { id: '2', name: 'Salary', type: 'INCOME', icon: 'work', color: '#4CAF50', isSystem: true },
-  { id: '3', name: 'Entertainment', type: 'EXPENSE', icon: 'movie', color: '#9C27B0', isSystem: true },
-  { id: '4', name: 'Bills & Utilities', type: 'EXPENSE', icon: 'receipt', color: '#607D8B', isSystem: true },
-  { id: '5', name: 'Other Income', type: 'INCOME', icon: 'attach_money', color: '#9C27B0', isSystem: true },
-  { id: '6', name: 'Transport', type: 'EXPENSE', icon: 'directions_car', color: '#2196F3', isSystem: true },
-  { id: '7', name: 'Food & Dining', type: 'EXPENSE', icon: 'restaurant', color: '#FF5722', isSystem: true },
-  { id: '8', name: 'Freelance', type: 'INCOME', icon: 'laptop', color: '#8BC34A', isSystem: true },
+  { id: '1', name: 'Groceries', type: 'EXPENSE', icon: 'shopping_cart', color: '#FF9800' },
+  { id: '2', name: 'Salary', type: 'INCOME', icon: 'work', color: '#4CAF50' },
+  { id: '3', name: 'Entertainment', type: 'EXPENSE', icon: 'movie', color: '#9C27B0' },
+  { id: '4', name: 'Bills & Utilities', type: 'EXPENSE', icon: 'receipt', color: '#607D8B' },
+  { id: '5', name: 'Other Income', type: 'INCOME', icon: 'attach_money', color: '#9C27B0' },
+  { id: '6', name: 'Transport', type: 'EXPENSE', icon: 'directions_car', color: '#2196F3' },
+  { id: '7', name: 'Food & Dining', type: 'EXPENSE', icon: 'restaurant', color: '#FF5722' },
+  { id: '8', name: 'Freelance', type: 'INCOME', icon: 'laptop', color: '#8BC34A' },
+];
+
+// Category lookup helpers
+const getCategoryById = (id?: string) => mockCategories.find((c) => c.id === id);
+const getCategoryName = (id?: string) => getCategoryById(id)?.name || 'Uncategorized';
+const getCategoryColor = (id?: string) => getCategoryById(id)?.color || '#9E9E9E';
+
+// Mock transactions using only fields from the `Transaction` type
+const mockTransactions: Transaction[] = [
+  { id: '1', walletId: '1', userId: '1', type: 'EXPENSE', amount: 125.5, currency: 'PLN', description: 'Weekly groceries at Biedronka', categoryId: '1', transactionDate: '2024-12-13' },
+  { id: '2', walletId: '1', userId: '1', type: 'INCOME', amount: 5000.0, currency: 'PLN', description: 'Monthly salary', categoryId: '2', transactionDate: '2024-12-10' },
+  { id: '3', walletId: '2', userId: '1', type: 'EXPENSE', amount: 89.99, currency: 'PLN', description: 'Netflix subscription', categoryId: '3', transactionDate: '2024-12-09' },
+  { id: '4', walletId: '1', userId: '1', type: 'EXPENSE', amount: 450.0, currency: 'PLN', description: 'Electric bill December', categoryId: '4', transactionDate: '2024-12-08' },
+  { id: '5', walletId: '3', userId: '1', type: 'INCOME', amount: 500.0, currency: 'PLN', description: 'Transfer to savings', categoryId: '5', transactionDate: '2024-12-05' },
+  { id: '6', walletId: '1', userId: '1', type: 'EXPENSE', amount: 65.0, currency: 'PLN', description: 'Uber rides', categoryId: '6', transactionDate: '2024-12-04' },
+  { id: '7', walletId: '1', userId: '1', type: 'EXPENSE', amount: 180.0, currency: 'PLN', description: 'Restaurant dinner', categoryId: '7', transactionDate: '2024-12-03' },
+  { id: '8', walletId: '1', userId: '1', type: 'INCOME', amount: 250.0, currency: 'PLN', description: 'Freelance project', categoryId: '8', transactionDate: '2024-12-02' },
 ];
 
 const TransactionsPage = () => {
@@ -102,7 +108,7 @@ const TransactionsPage = () => {
 
   const filteredTransactions = transactions.filter((t) => {
     const matchesSearch = t.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.categoryName?.toLowerCase().includes(searchQuery.toLowerCase());
+      getCategoryName(t.categoryId).toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = typeFilter === 'ALL' || t.type === typeFilter;
     const matchesCategory = categoryFilter === 'ALL' || t.categoryId === categoryFilter;
     const matchesWallet = walletFilter === 'ALL' || t.walletId === walletFilter;
@@ -114,7 +120,6 @@ const TransactionsPage = () => {
   };
 
   const handleCreateTransaction = () => {
-    const category = mockCategories.find((c) => c.id === newTransaction.categoryId);
     const wallet = mockWallets.find((w) => w.id === newTransaction.walletId);
     const transaction: Transaction = {
       id: String(Date.now()),
@@ -125,10 +130,7 @@ const TransactionsPage = () => {
       currency: wallet?.currency || 'PLN',
       description: newTransaction.description,
       categoryId: newTransaction.categoryId,
-      categoryName: category?.name,
-      categoryColor: category?.color,
       transactionDate: newTransaction.transactionDate,
-      createdAt: new Date().toISOString(),
     };
     setTransactions([transaction, ...transactions]);
     setCreateDialogOpen(false);
@@ -327,7 +329,7 @@ const TransactionsPage = () => {
                             {transaction.description || 'No description'}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {transaction.paymentMethod}
+                            {getCategoryName(transaction.categoryId)}
                           </Typography>
                         </Box>
                       </Box>
@@ -344,11 +346,11 @@ const TransactionsPage = () => {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={transaction.categoryName}
+                        label={getCategoryName(transaction.categoryId)}
                         size="small"
                         sx={{
-                          bgcolor: `${transaction.categoryColor}20`,
-                          color: transaction.categoryColor,
+                          bgcolor: `${getCategoryColor(transaction.categoryId)}20`,
+                          color: getCategoryColor(transaction.categoryId),
                           fontWeight: 600,
                         }}
                       />
