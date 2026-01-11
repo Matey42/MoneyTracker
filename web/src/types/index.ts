@@ -121,19 +121,21 @@ export interface Liability {
   id: string;
   name: string;
   type: LiabilityType;
+
   principalAmount: number;
   currentBalance: number;
   interestRate?: number;
   minimumPayment?: number;
   dueDate?: number;
   currency: string;
+  
   startDate?: string;
   endDate?: string;
   isActive: boolean;
+  
   notes?: string;
   createdAt: string;
 }
-
 
 // Dashboard types
 export interface DashboardData {

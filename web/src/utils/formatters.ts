@@ -41,35 +41,3 @@ export const getRelativeTime = (date: string | Date): string => {
   
   return formatDate(d);
 };
-
-export const getWalletTypeLabel = (type: string): string => {
-  const labels: Record<string, string> = {
-    PERSONAL: 'Personal',
-    FAMILY: 'Family',
-    BUSINESS: 'Business',
-    SAVINGS: 'Savings',
-    CASH: 'Cash',
-  };
-  return labels[type] || type;
-};
-
-export const getWalletTypeColor = (type: string): string => {
-  const colors: Record<string, string> = {
-    PERSONAL: '#2563eb',
-    FAMILY: '#7c3aed',
-    BUSINESS: '#059669',
-    SAVINGS: '#d97706',
-    CASH: '#64748b',
-  };
-  return colors[type] || '#64748b';
-};
-
-export const getLiabilityTypeLabel = (type: string): string => {
-  const labels: Record<string, string> = {
-    LOAN: 'Loan',
-    CREDIT_CARD: 'Credit Card',
-    MORTGAGE: 'Mortgage',
-    PERSONAL_DEBT: 'Personal Debt',
-  };
-  return labels[type] || type;
-};
