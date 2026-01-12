@@ -267,6 +267,13 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           mt: '64px',
           backgroundColor: 'background.default',
           minHeight: 'calc(100vh - 64px)',
+          height: 'calc(100vh - 64px)',
+          overflowY: 'auto',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          '&::-webkit-scrollbar': {
+            display: 'none',
+          },
         }}
       >
         {children}

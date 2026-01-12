@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -23,7 +23,12 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Divider,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Add as AddIcon,
   AccountBalanceWallet as WalletIcon,
@@ -32,6 +37,7 @@ import {
   Delete as DeleteIcon,
   ExitToApp as LeaveIcon,
   People as PeopleIcon,
+  ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 import type { Wallet, WalletCategory } from '../types';
 import { formatCurrency } from '../utils/formatters';
@@ -62,6 +68,7 @@ const WalletsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [menuAnchor, setMenuAnchor] = useState<{ element: HTMLElement; wallet: Wallet } | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [newWallet, setNewWallet] = useState({
     name: '',
     type: 'BANK' as WalletCategory,
@@ -111,15 +118,27 @@ const WalletsPage = () => {
   };
 
   const totalBalance = wallets.reduce((sum, w) => sum + w.balance, 0);
+  const walletGroups = useMemo(() => (
+    walletTypes.map((type) => {
+      const items = wallets.filter((wallet) => wallet.type === type.value);
+      const balance = items.reduce((sum, wallet) => sum + wallet.balance, 0);
+      return {
+        ...type,
+        color: getWalletColor(type.value),
+        items,
+        balance,
+      };
+    })
+  ), [wallets]);
 
   if (isLoading) {
     return (
       <Box>
         <Skeleton variant="text" width={200} height={40} sx={{ mb: 4 }} />
         <Grid container spacing={3}>
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
-              <Skeleton variant="rounded" height={180} />
+          {[1, 2, 3].map((i) => (
+            <Grid key={i} size={{ xs: 12, md: 6, lg: 4 }}>
+              <Skeleton variant="rounded" height={320} />
             </Grid>
           ))}
         </Grid>
@@ -128,7 +147,17 @@ const WalletsPage = () => {
   }
 
   return (
-    <Box>
+    <Box
+      sx={{
+        overflowX: 'hidden',
+        overflowY: 'auto',
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+        '&::-webkit-scrollbar': {
+          display: 'none',
+        },
+      }}
+    >
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box>
@@ -148,123 +177,426 @@ const WalletsPage = () => {
         </Button>
       </Box>
 
-      {/* Wallets Grid */}
-      <Grid container spacing={3}>
-        {wallets.map((wallet) => (
-          <Grid key={wallet.id} size={{ xs: 12, sm: 6, md: 4 }}>
-            <Card
+      {/* Wallets by Type */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {walletGroups.map((group) => {
+          const personalItems = group.items.filter((wallet) => !wallet.isShared);
+          const sharedItems = group.items.filter((wallet) => wallet.isShared);
+          const previewPersonal = personalItems.slice(0, 2);
+          const previewShared = sharedItems.slice(0, 2);
+          const extraPersonal = Math.max(personalItems.length - previewPersonal.length, 0);
+          const extraShared = Math.max(sharedItems.length - previewShared.length, 0);
+          const isExpanded = expandedGroups[group.value] ?? false;
+
+          return (
+            <Accordion
+              key={group.value}
+              expanded={isExpanded}
+              onChange={(_, nextExpanded) => {
+                setExpandedGroups((current) => ({
+                  ...current,
+                  [group.value]: nextExpanded,
+                }));
+              }}
+              elevation={0}
               sx={{
-                height: '100%',
-                position: 'relative',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
-                },
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2,
+                overflow: 'hidden',
+                background: `linear-gradient(180deg, ${alpha(group.color, 0.06)}, transparent 45%)`,
+                '&:before': { display: 'none' },
               }}
             >
-              <CardActionArea
-                onClick={() => navigate(`/wallets/${wallet.id}`)}
-                sx={{ height: '100%' }}
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                sx={{
+                  '& .MuiAccordionSummary-content': {
+                    my: 0,
+                  },
+                  minHeight: 170,
+                  py: 2,
+                }}
               >
-                <CardContent sx={{ p: 3 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Avatar
-                      sx={{
-                        bgcolor: getWalletColor(wallet.type),
-                        width: 48,
-                        height: 48,
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'stretch',
+                    width: '100%',
+                    pr: 1,
+                    gap: 2,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+                    <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box
+                          sx={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: '50%',
+                            bgcolor: group.color,
+                          }}
+                        />
+                        <Typography variant="h6" fontWeight={700}>
+                          {group.label}
+                        </Typography>
+                        <Chip
+                          label={getWalletLabel(group.value)}
+                          size="small"
+                          sx={{
+                            bgcolor: alpha(group.color, 0.16),
+                            color: group.color,
+                            fontWeight: 600,
+                          }}
+                        />
+                      </Box>
+                      <Typography variant="body2" color="text.secondary">
+                        {group.items.length} wallets · {formatCurrency(group.balance)}
+                      </Typography>
+                    </Box>
+                    <Button
+                      size="small"
+                      startIcon={<AddIcon />}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setCreateDialogOpen(true);
+                        setNewWallet((current) => ({ ...current, type: group.value }));
                       }}
                     >
-                      <WalletIcon />
-                    </Avatar>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => handleMenuOpen(e, wallet)}
-                      sx={{ position: 'absolute', top: 8, right: 8 }}
-                    >
-                      <MoreIcon />
-                    </IconButton>
+                      Add wallet
+                    </Button>
                   </Box>
 
-                  <Typography variant="h6" fontWeight={600} gutterBottom noWrap>
-                    {wallet.name}
-                  </Typography>
+                  {!isExpanded && (
+                    <Box sx={{ display: 'flex', alignItems: 'stretch', gap: 2, flexWrap: 'wrap', pl: 0.5 }}>
+                      <Box sx={{ flex: '1 1 240px', minWidth: 220 }}>
+                        <Typography variant="caption" fontWeight={700} color="text.secondary">
+                          Personal
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mt: 1 }}>
+                          {personalItems.length === 0 ? (
+                            <Chip label="No personal wallets" size="small" variant="outlined" />
+                          ) : (
+                            <>
+                              {previewPersonal.map((wallet) => (
+                                <Card
+                                  key={wallet.id}
+                                  variant="outlined"
+                                  sx={{
+                                    px: 1.5,
+                                    py: 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    borderRadius: 2,
+                                    borderColor: alpha(group.color, 0.22),
+                                    bgcolor: 'background.paper',
+                                    minWidth: 180,
+                                  }}
+                                >
+                                  <Avatar
+                                    sx={{
+                                      bgcolor: getWalletColor(wallet.type),
+                                      width: 26,
+                                      height: 26,
+                                    }}
+                                  >
+                                    <WalletIcon sx={{ fontSize: 16 }} />
+                                  </Avatar>
+                                  <Box sx={{ minWidth: 0 }}>
+                                    <Typography variant="caption" fontWeight={600} noWrap>
+                                      {wallet.name}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary" display="block" noWrap>
+                                      {formatCurrency(wallet.balance, wallet.currency)}
+                                    </Typography>
+                                  </Box>
+                                </Card>
+                              ))}
+                              {extraPersonal > 0 && (
+                                <Chip label={`+${extraPersonal} more`} size="small" variant="outlined" />
+                              )}
+                            </>
+                          )}
+                        </Box>
+                      </Box>
 
-                  <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                    <Chip
-                      label={getWalletLabel(wallet.type)}
-                      size="small"
-                      sx={{
-                        bgcolor: `${getWalletColor(wallet.type)}20`,
-                        color: getWalletColor(wallet.type),
-                        fontWeight: 600,
-                      }}
-                    />
-                    {!wallet.isOwner && (
-                      <Chip
-                        icon={<PeopleIcon sx={{ fontSize: 16 }} />}
-                        label="Shared"
-                        size="small"
-                        variant="outlined"
+                      <Divider
+                        orientation="vertical"
+                        flexItem
+                        sx={{ display: { xs: 'none', md: 'block' }, borderColor: alpha(group.color, 0.2) }}
                       />
-                    )}
-                  </Box>
 
-                  <Typography variant="h5" fontWeight={700} color="primary.main">
-                    {formatCurrency(wallet.balance, wallet.currency)}
-                  </Typography>
-
-                  {wallet.description && (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mt: 1 }}
-                      noWrap
-                    >
-                      {wallet.description}
-                    </Typography>
+                      <Box sx={{ flex: '1 1 240px', minWidth: 220 }}>
+                        <Typography variant="caption" fontWeight={700} color="text.secondary">
+                          Shared
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mt: 1 }}>
+                          {sharedItems.length === 0 ? (
+                            <Chip label="No shared wallets" size="small" variant="outlined" />
+                          ) : (
+                            <>
+                              {previewShared.map((wallet) => (
+                                <Card
+                                  key={wallet.id}
+                                  variant="outlined"
+                                  sx={{
+                                    px: 1.5,
+                                    py: 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    borderRadius: 2,
+                                    borderColor: alpha(group.color, 0.22),
+                                    bgcolor: 'background.paper',
+                                    minWidth: 180,
+                                  }}
+                                >
+                                  <Avatar
+                                    sx={{
+                                      bgcolor: getWalletColor(wallet.type),
+                                      width: 26,
+                                      height: 26,
+                                    }}
+                                  >
+                                    <WalletIcon sx={{ fontSize: 16 }} />
+                                  </Avatar>
+                                  <Box sx={{ minWidth: 0 }}>
+                                    <Typography variant="caption" fontWeight={600} noWrap>
+                                      {wallet.name}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary" display="block" noWrap>
+                                      {formatCurrency(wallet.balance, wallet.currency)}
+                                    </Typography>
+                                  </Box>
+                                </Card>
+                              ))}
+                              {extraShared > 0 && (
+                                <Chip label={`+${extraShared} more`} size="small" variant="outlined" />
+                              )}
+                            </>
+                          )}
+                        </Box>
+                      </Box>
+                    </Box>
                   )}
-                </CardContent>
-              </CardActionArea>
-            </Card>
-          </Grid>
-        ))}
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                {group.items.length === 0 ? (
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      borderStyle: 'dashed',
+                      bgcolor: 'transparent',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <CardContent>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        No wallets in this category yet.
+                      </Typography>
+                      <Button
+                        size="small"
+                        startIcon={<AddIcon />}
+                        onClick={() => setCreateDialogOpen(true)}
+                      >
+                        Add wallet
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <Typography variant="subtitle2" fontWeight={700}>
+                          Personal
+                        </Typography>
+                        <Chip label={personalItems.length} size="small" variant="outlined" />
+                      </Box>
+                      <Divider sx={{ mb: 2 }} />
+                      {personalItems.length === 0 ? (
+                        <Typography variant="body2" color="text.secondary">
+                          No personal wallets in this category.
+                        </Typography>
+                      ) : (
+                        <Grid container spacing={2}>
+                          {personalItems.map((wallet) => (
+                            <Grid key={wallet.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                              <Card
+                                variant="outlined"
+                                sx={{
+                                  position: 'relative',
+                                  borderColor: 'divider',
+                                  height: '100%',
+                                  minHeight: 168,
+                                  transition: 'transform 0.2s, box-shadow 0.2s, border-color 0.2s',
+                                  '&:hover': {
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 10px 24px rgba(15, 23, 42, 0.08)',
+                                    borderColor: 'primary.main',
+                                  },
+                                }}
+                              >
+                                <CardActionArea
+                                  onClick={() => navigate(`/wallets/${wallet.id}`)}
+                                  sx={{ height: '100%' }}
+                                >
+                                  <CardContent sx={{ p: 2.5, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flex: 1 }}>
+                                        <Avatar
+                                          sx={{
+                                            bgcolor: alpha(getWalletColor(wallet.type), 0.12),
+                                            color: getWalletColor(wallet.type),
+                                            width: 26,
+                                            height: 26,
+                                          }}
+                                        >
+                                          <WalletIcon sx={{ fontSize: 16 }} />
+                                        </Avatar>
+                                        <Typography variant="subtitle1" fontWeight={700} noWrap>
+                                          {wallet.name}
+                                        </Typography>
+                                      </Box>
+                                      <IconButton
+                                        size="small"
+                                        onClick={(e) => handleMenuOpen(e, wallet)}
+                                        sx={{ ml: 1 }}
+                                      >
+                                        <MoreIcon fontSize="small" />
+                                      </IconButton>
+                                    </Box>
 
-        {/* Add New Wallet Card */}
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <Card
-            sx={{
-              height: '100%',
-              minHeight: 200,
-              border: '2px dashed',
-              borderColor: 'divider',
-              bgcolor: 'transparent',
-              cursor: 'pointer',
-              transition: 'border-color 0.2s',
-              '&:hover': {
-                borderColor: 'primary.main',
-              },
-            }}
-            onClick={() => setCreateDialogOpen(true)}
-          >
-            <CardContent
-              sx={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Avatar sx={{ bgcolor: 'action.hover', mb: 2 }}>
-                <AddIcon color="action" />
-              </Avatar>
-              <Typography color="text.secondary">Create New Wallet</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+                                    <Typography variant="h6" fontWeight={700} color="primary.main" sx={{ mt: 1 }}>
+                                      {formatCurrency(wallet.balance, wallet.currency)}
+                                    </Typography>
+
+                                    {wallet.description && (
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                        sx={{ mt: 0.5 }}
+                                        noWrap
+                                      >
+                                        {wallet.description}
+                                      </Typography>
+                                    )}
+                                  </CardContent>
+                                </CardActionArea>
+                              </Card>
+                            </Grid>
+                          ))}
+                        </Grid>
+                      )}
+                    </Box>
+
+                    <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <Typography variant="subtitle2" fontWeight={700}>
+                          Shared
+                        </Typography>
+                        <Chip label={sharedItems.length} size="small" variant="outlined" />
+                      </Box>
+                      <Divider sx={{ mb: 2 }} />
+                      {sharedItems.length === 0 ? (
+                        <Typography variant="body2" color="text.secondary">
+                          No shared wallets in this category.
+                        </Typography>
+                      ) : (
+                        <Grid container spacing={2}>
+                          {sharedItems.map((wallet) => (
+                            <Grid key={wallet.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                              <Card
+                                variant="outlined"
+                                sx={{
+                                  position: 'relative',
+                                  borderColor: 'divider',
+                                  height: '100%',
+                                  minHeight: 168,
+                                  transition: 'transform 0.2s, box-shadow 0.2s, border-color 0.2s',
+                                  '&:hover': {
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 10px 24px rgba(15, 23, 42, 0.08)',
+                                    borderColor: 'primary.main',
+                                  },
+                                }}
+                              >
+                                <CardActionArea
+                                  onClick={() => navigate(`/wallets/${wallet.id}`)}
+                                  sx={{ height: '100%' }}
+                                >
+                                  <CardContent sx={{ p: 2.5, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flex: 1 }}>
+                                        <Avatar
+                                          sx={{
+                                            bgcolor: alpha(getWalletColor(wallet.type), 0.12),
+                                            color: getWalletColor(wallet.type),
+                                            width: 26,
+                                            height: 26,
+                                          }}
+                                        >
+                                          <WalletIcon sx={{ fontSize: 16 }} />
+                                        </Avatar>
+                                        <Typography variant="subtitle1" fontWeight={700} noWrap>
+                                          {wallet.name}
+                                        </Typography>
+                                      </Box>
+                                      <IconButton
+                                        size="small"
+                                        onClick={(e) => handleMenuOpen(e, wallet)}
+                                        sx={{ ml: 1 }}
+                                      >
+                                        <MoreIcon fontSize="small" />
+                                      </IconButton>
+                                    </Box>
+
+                                    <Box sx={{ display: 'flex', gap: 1, mt: 1, mb: 1 }}>
+                                      <Chip
+                                        icon={<PeopleIcon sx={{ fontSize: 16 }} />}
+                                        label={wallet.memberCount ? `${wallet.memberCount} members` : 'Members'}
+                                        size="small"
+                                        variant="outlined"
+                                      />
+                                      <Chip
+                                        label={wallet.isOwner ? 'Owner' : 'Member'}
+                                        size="small"
+                                        variant="outlined"
+                                      />
+                                    </Box>
+
+                                    <Typography variant="h6" fontWeight={700} color="primary.main">
+                                      {formatCurrency(wallet.balance, wallet.currency)}
+                                    </Typography>
+
+                                    {wallet.description && (
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                        sx={{ mt: 0.5 }}
+                                        noWrap
+                                      >
+                                        {wallet.description}
+                                      </Typography>
+                                    )}
+                                  </CardContent>
+                                </CardActionArea>
+                              </Card>
+                            </Grid>
+                          ))}
+                        </Grid>
+                      )}
+                    </Box>
+                  </Box>
+                )}
+              </AccordionDetails>
+            </Accordion>
+          );
+        })}
+      </Box>
 
       {/* Context Menu */}
       <Menu
