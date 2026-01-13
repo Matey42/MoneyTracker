@@ -28,6 +28,7 @@ export interface Wallet {
   description?: string;
   icon?: string;
   color?: string;
+  isFavorite?: boolean;
   createdAt: string;
 }
 
