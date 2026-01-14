@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useMemo, type ReactNode } from 'react';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -19,6 +19,7 @@ import {
   useMediaQuery,
   useTheme,
   Tooltip,
+  Collapse,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -31,18 +32,54 @@ import {
   Person as PersonIcon,
   DarkMode as DarkModeIcon,
   LightMode as LightModeIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  AccountBalance as BankIcon,
+  TrendingUp as InvestmentsIcon,
+  CurrencyBitcoin as CryptoIcon,
+  Home as RealEstateIcon,
+  MoreHoriz as OtherIcon,
+  Assessment as ReportsIcon,
 } from '@mui/icons-material';
 import { useAppSelector, useAppDispatch } from '../hooks/useAppStore';
 import { logout } from '../features/auth/authSlice';
 import { useColorMode } from '../contexts/ColorModeContext';
+import type { WalletCategory } from '../types';
+import { getWalletLabel } from '../utils/walletConfig';
 
 const DRAWER_WIDTH = 260;
 
-const menuItems = [
+// Icon mapping for wallet categories
+const categoryIcons: Record<WalletCategory, React.ReactNode> = {
+  BANK_CASH: <BankIcon />,
+  INVESTMENTS: <InvestmentsIcon />,
+  CRYPTO: <CryptoIcon />,
+  REAL_ESTATE: <RealEstateIcon />,
+  OTHER: <OtherIcon />,
+};
+
+// URL slug mapping for categories
+const categorySlug: Record<WalletCategory, string> = {
+  BANK_CASH: 'bank-cash',
+  INVESTMENTS: 'investments',
+  CRYPTO: 'crypto',
+  REAL_ESTATE: 'real-estate',
+  OTHER: 'other',
+};
+
+interface NavItem {
+  text: string;
+  icon: React.ReactNode;
+  path: string;
+  hasChildren?: boolean;
+}
+
+const baseMenuItems: NavItem[] = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-  { text: 'Wallets', icon: <WalletIcon />, path: '/wallets' },
-  { text: 'Transactions', icon: <TransactionIcon />, path: '/transactions' },
+  { text: 'Wallets', icon: <WalletIcon />, path: '/wallets', hasChildren: true },
   { text: 'Liabilities', icon: <LiabilityIcon />, path: '/liabilities' },
+  { text: 'Transactions', icon: <TransactionIcon />, path: '/transactions' },
+  { text: 'Reports', icon: <ReportsIcon />, path: '/reports' },
 ];
 
 interface MainLayoutProps {
@@ -58,8 +95,23 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const dispatch = useAppDispatch();
 
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+  const { wallets } = useAppSelector((state) => state.wallets);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [walletsOpen, setWalletsOpen] = useState(true);
+
+  // Dynamically compute which categories have wallets
+  const walletCategories = useMemo(() => {
+    const categoriesWithWallets = new Set<WalletCategory>();
+    wallets.forEach((wallet) => categoriesWithWallets.add(wallet.type));
+    
+    return Array.from(categoriesWithWallets).map((category) => ({
+      text: getWalletLabel(category),
+      icon: categoryIcons[category],
+      path: `/wallets/${categorySlug[category]}`,
+      category,
+    }));
+  }, [wallets]);
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -102,47 +154,163 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       <Divider />
 
       <List sx={{ flex: 1, px: 2, py: 2 }}>
-        {menuItems.map((item) => (
-          <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
-            <ListItemButton
-              onClick={() => handleNavigation(item.path)}
-              selected={location.pathname === item.path}
-              sx={{
-                borderRadius: 2,
-                '&.Mui-selected': {
-                  backgroundColor: 'primary.main',
-                  color: 'white',
-                  '&:hover': {
-                    backgroundColor: 'primary.dark',
-                  },
-                  '& .MuiListItemIcon-root': {
+        {baseMenuItems.map((item) => (
+          <Box key={item.text}>
+            <ListItem disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                onClick={() => {
+                  handleNavigation(item.path);
+                  // Auto-expand wallets submenu when clicking on Wallets
+                  if (item.hasChildren && !walletsOpen) {
+                    setWalletsOpen(true);
+                  }
+                }}
+                selected={location.pathname === item.path || (item.hasChildren && location.pathname.startsWith(item.path))}
+                sx={{
+                  borderRadius: 2,
+                  '&.Mui-selected': {
+                    backgroundColor: 'primary.main',
                     color: 'white',
+                    '&:hover': {
+                      backgroundColor: 'primary.dark',
+                    },
+                    '& .MuiListItemIcon-root': {
+                      color: 'white',
+                    },
                   },
-                },
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.text} />
+                {item.hasChildren && walletCategories.length > 0 && (
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setWalletsOpen(!walletsOpen);
+                    }}
+                    sx={{ 
+                      color: 'inherit',
+                      p: 0.5,
+                      ml: 1,
+                    }}
+                  >
+                    {walletsOpen ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                  </IconButton>
+                )}
+              </ListItemButton>
+            </ListItem>
+            {item.hasChildren && walletCategories.length > 0 && (
+              <Collapse in={walletsOpen} timeout="auto" unmountOnExit>
+                <List component="div" disablePadding>
+                  {walletCategories.map((child) => (
+                    <ListItem key={child.text} disablePadding sx={{ mb: 0.5 }}>
+                      <ListItemButton
+                        onClick={() => handleNavigation(child.path)}
+                        selected={location.pathname === child.path}
+                        sx={{
+                          pl: 4,
+                          borderRadius: 2,
+                          '&.Mui-selected': {
+                            backgroundColor: 'primary.main',
+                            color: 'white',
+                            '&:hover': {
+                              backgroundColor: 'primary.dark',
+                            },
+                            '& .MuiListItemIcon-root': {
+                              color: 'white',
+                            },
+                          },
+                        }}
+                      >
+                        <ListItemIcon sx={{ minWidth: 36 }}>{child.icon}</ListItemIcon>
+                        <ListItemText primary={child.text} primaryTypographyProps={{ fontSize: '0.9rem' }} />
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
+                </List>
+              </Collapse>
+            )}
+          </Box>
         ))}
       </List>
 
       <Divider />
 
-      <List sx={{ px: 2, py: 2 }}>
-        <ListItem disablePadding>
-          <ListItemButton
-            onClick={() => handleNavigation('/settings')}
-            sx={{ borderRadius: 2 }}
+      {/* User panel - Discord style */}
+      <Box sx={{ p: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            p: 1,
+            borderRadius: 2,
+            bgcolor: 'action.hover',
+          }}
+        >
+          <Avatar 
+            sx={{ 
+              bgcolor: 'primary.main', 
+              width: 36, 
+              height: 36,
+              cursor: 'pointer',
+            }}
+            onClick={handleMenuOpen}
           >
-            <ListItemIcon sx={{ minWidth: 40 }}>
-              <SettingsIcon />
-            </ListItemIcon>
-            <ListItemText primary="Settings" />
-          </ListItemButton>
-        </ListItem>
-      </List>
+            {user?.firstName?.charAt(0) || 'U'}
+          </Avatar>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="body2" fontWeight={600} noWrap>
+              {user?.firstName || 'User'} {user?.lastName || ''}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" noWrap>
+              {user?.email || 'user@example.com'}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            <Tooltip title={mode === 'dark' ? 'Light mode' : 'Dark mode'}>
+              <IconButton size="small" onClick={toggleColorMode}>
+                {mode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Settings">
+              <IconButton size="small" onClick={() => handleNavigation('/settings')}>
+                <SettingsIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* User menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{ horizontal: 'right', vertical: 'top' }}
+        transformOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+      >
+        <MenuItem onClick={() => { handleNavigation('/profile'); handleMenuClose(); }}>
+          <ListItemIcon>
+            <PersonIcon fontSize="small" />
+          </ListItemIcon>
+          Profile
+        </MenuItem>
+        <MenuItem onClick={() => { handleNavigation('/settings'); handleMenuClose(); }}>
+          <ListItemIcon>
+            <SettingsIcon fontSize="small" />
+          </ListItemIcon>
+          Settings
+        </MenuItem>
+        <Divider />
+        <MenuItem onClick={handleLogout}>
+          <ListItemIcon>
+            <LogoutIcon fontSize="small" />
+          </ListItemIcon>
+          Logout
+        </MenuItem>
+      </Menu>
     </Box>
   );
 
@@ -170,50 +338,10 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           </IconButton>
 
           <Typography variant="h6" noWrap component="div" sx={{ display: { xs: 'none', sm: 'block' } }}>
-            {menuItems.find(item => item.path === location.pathname)?.text || 'MoneyTracker'}
+            {baseMenuItems.find(item => item.path === location.pathname)?.text || 'MoneyTracker'}
           </Typography>
 
           <Box sx={{ flex: 1 }} />
-
-          <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
-            <IconButton onClick={toggleColorMode} sx={{ mr: 1 }}>
-              {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
-            </IconButton>
-          </Tooltip>
-
-          <IconButton onClick={handleMenuOpen}>
-            <Avatar sx={{ bgcolor: 'primary.main', width: 36, height: 36 }}>
-              {user?.firstName?.charAt(0) || 'U'}
-            </Avatar>
-          </IconButton>
-
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleMenuClose}
-            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-          >
-            <MenuItem onClick={() => { handleNavigation('/profile'); handleMenuClose(); }}>
-              <ListItemIcon>
-                <PersonIcon fontSize="small" />
-              </ListItemIcon>
-              Profile
-            </MenuItem>
-            <MenuItem onClick={() => { handleNavigation('/settings'); handleMenuClose(); }}>
-              <ListItemIcon>
-                <SettingsIcon fontSize="small" />
-              </ListItemIcon>
-              Settings
-            </MenuItem>
-            <Divider />
-            <MenuItem onClick={handleLogout}>
-              <ListItemIcon>
-                <LogoutIcon fontSize="small" />
-              </ListItemIcon>
-              Logout
-            </MenuItem>
-          </Menu>
         </Toolbar>
       </AppBar>
 

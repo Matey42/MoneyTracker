@@ -7,7 +7,7 @@ export interface User {
 }
 
 // Wallet types
-export type WalletCategory = 'CASH' | 'BANK' | 'INVESTMENTS' | 'CRYPTO' | 'REAL_ESTATE' | 'OTHER';
+export type WalletCategory = 'BANK_CASH' | 'INVESTMENTS' | 'CRYPTO' | 'REAL_ESTATE' | 'OTHER';
 
 export interface Wallet {
   id: string;

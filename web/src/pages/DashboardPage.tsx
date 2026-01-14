@@ -35,9 +35,9 @@ const mockDashboardData: DashboardData = {
   monthlyIncome: 8500.00,
   monthlyExpense: 4230.75,
   wallets: [
-    { id: '1', name: 'Personal Account', type: 'BANK', currency: 'PLN', balance: 8500.50, isOwner: true, isShared: false, createdAt: '2024-01-01' },
-    { id: '2', name: 'Family Budget', type: 'BANK', currency: 'PLN', balance: 4200.00, isOwner: true, isShared: true, memberCount: 3, createdAt: '2024-01-15' },
-    { id: '3', name: 'Savings', type: 'BANK', currency: 'PLN', balance: 2720.00, isOwner: true, isShared: false, createdAt: '2024-02-01' },
+    { id: '1', name: 'Personal Account', type: 'BANK_CASH', currency: 'PLN', balance: 8500.50, isOwner: true, isShared: false, createdAt: '2024-01-01' },
+    { id: '2', name: 'Family Budget', type: 'BANK_CASH', currency: 'PLN', balance: 4200.00, isOwner: true, isShared: true, memberCount: 3, createdAt: '2024-01-15' },
+    { id: '3', name: 'Savings', type: 'BANK_CASH', currency: 'PLN', balance: 2720.00, isOwner: true, isShared: false, createdAt: '2024-02-01' },
   ],
   recentTransactions: [
     { id: '1', walletId: '1', userId: '1', type: 'EXPENSE', amount: 125.50, currency: 'PLN', description: 'Groceries', categoryId: 'groceries', transactionDate: '2024-12-13' },
