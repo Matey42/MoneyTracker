@@ -3,8 +3,6 @@ import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Drawer,
-  AppBar,
-  Toolbar,
   Typography,
   IconButton,
   List,
@@ -18,7 +16,6 @@ import {
   Divider,
   useMediaQuery,
   useTheme,
-  Tooltip,
   Collapse,
 } from '@mui/material';
 import {
@@ -240,6 +237,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       {/* User panel - Discord style */}
       <Box sx={{ p: 2 }}>
         <Box
+          onClick={handleMenuOpen}
           sx={{
             display: 'flex',
             alignItems: 'center',
@@ -247,6 +245,11 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             p: 1,
             borderRadius: 2,
             bgcolor: 'action.hover',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s',
+            '&:hover': {
+              bgcolor: 'action.selected',
+            },
           }}
         >
           <Avatar 
@@ -254,9 +257,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
               bgcolor: 'primary.main', 
               width: 36, 
               height: 36,
-              cursor: 'pointer',
             }}
-            onClick={handleMenuOpen}
           >
             {user?.firstName?.charAt(0) || 'U'}
           </Avatar>
@@ -268,18 +269,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
               {user?.email || 'user@example.com'}
             </Typography>
           </Box>
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <Tooltip title={mode === 'dark' ? 'Light mode' : 'Dark mode'}>
-              <IconButton size="small" onClick={toggleColorMode}>
-                {mode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Settings">
-              <IconButton size="small" onClick={() => handleNavigation('/settings')}>
-                <SettingsIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Box>
         </Box>
       </Box>
 
@@ -288,8 +277,13 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
-        anchorOrigin={{ horizontal: 'right', vertical: 'top' }}
-        transformOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+        anchorOrigin={{ horizontal: 'center', vertical: 'top' }}
+        transformOrigin={{ horizontal: 'center', vertical: 'bottom' }}
+        slotProps={{
+          paper: {
+            sx: { minWidth: 200 },
+          },
+        }}
       >
         <MenuItem onClick={() => { handleNavigation('/profile'); handleMenuClose(); }}>
           <ListItemIcon>
@@ -304,6 +298,13 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           Settings
         </MenuItem>
         <Divider />
+        <MenuItem onClick={() => { toggleColorMode(); handleMenuClose(); }}>
+          <ListItemIcon>
+            {mode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
+          </ListItemIcon>
+          {mode === 'dark' ? 'Light Mode' : 'Dark Mode'}
+        </MenuItem>
+        <Divider />
         <MenuItem onClick={handleLogout}>
           <ListItemIcon>
             <LogoutIcon fontSize="small" />
@@ -316,40 +317,29 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {/* App Bar */}
-      <AppBar
-        position="fixed"
-        sx={{
-          width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
-          ml: { md: `${DRAWER_WIDTH}px` },
-          backgroundColor: 'background.paper',
-          color: 'text.primary',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        }}
-      >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-
-          <Typography variant="h6" noWrap component="div" sx={{ display: { xs: 'none', sm: 'block' } }}>
-            {baseMenuItems.find(item => item.path === location.pathname)?.text || 'MoneyTracker'}
-          </Typography>
-
-          <Box sx={{ flex: 1 }} />
-        </Toolbar>
-      </AppBar>
-
       {/* Drawer */}
       <Box
         component="nav"
         sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}
       >
+        {/* Mobile menu button - floating */}
+        <IconButton
+          color="inherit"
+          onClick={handleDrawerToggle}
+          sx={{
+            display: { md: 'none' },
+            position: 'fixed',
+            top: 16,
+            left: 16,
+            zIndex: 1200,
+            bgcolor: 'background.paper',
+            boxShadow: 2,
+            '&:hover': { bgcolor: 'background.paper' },
+          }}
+        >
+          <MenuIcon />
+        </IconButton>
+
         {/* Mobile drawer */}
         <Drawer
           variant="temporary"
@@ -392,10 +382,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           flexGrow: 1,
           p: 3,
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
-          mt: '64px',
           backgroundColor: 'background.default',
-          minHeight: 'calc(100vh - 64px)',
-          height: 'calc(100vh - 64px)',
+          minHeight: '100vh',
           overflowY: 'auto',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',

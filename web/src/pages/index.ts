@@ -5,3 +5,8 @@ export { default as WalletsPage } from './WalletsPage';
 export { default as WalletDetailPage } from './WalletDetailPage';
 export { default as TransactionsPage } from './TransactionsPage';
 export { default as NotFoundPage } from './NotFoundPage';
+export { default as UnderConstructionPage } from './UnderConstructionPage';
+export { default as ReportsPage } from './ReportsPage';
+export { default as LiabilitiesPage } from './LiabilitiesPage';
+export { default as SettingsPage } from './SettingsPage';
+export { default as ProfilePage } from './ProfilePage';

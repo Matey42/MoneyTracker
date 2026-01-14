@@ -12,6 +12,10 @@ import {
   WalletDetailPage,
   TransactionsPage,
   NotFoundPage,
+  ReportsPage,
+  LiabilitiesPage,
+  SettingsPage,
+  ProfilePage,
 } from './pages';
 
 function AppContent() {
@@ -29,9 +33,10 @@ function AppContent() {
           <Route path="/wallets" element={<MainLayout><WalletsPage /></MainLayout>} />
           <Route path="/wallets/:id" element={<MainLayout><WalletDetailPage /></MainLayout>} />
           <Route path="/transactions" element={<MainLayout><TransactionsPage /></MainLayout>} />
-          <Route path="/liabilities" element={<MainLayout><DashboardPage /></MainLayout>} />
-          <Route path="/settings" element={<MainLayout><DashboardPage /></MainLayout>} />
-          <Route path="/profile" element={<MainLayout><DashboardPage /></MainLayout>} />
+          <Route path="/reports" element={<MainLayout><ReportsPage /></MainLayout>} />
+          <Route path="/liabilities" element={<MainLayout><LiabilitiesPage /></MainLayout>} />
+          <Route path="/settings" element={<MainLayout><SettingsPage /></MainLayout>} />
+          <Route path="/profile" element={<MainLayout><ProfilePage /></MainLayout>} />
 
           {/* Redirects */}
           <Route path="/" element={<Navigate to="/login" replace />} />
