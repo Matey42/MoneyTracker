@@ -269,6 +269,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
               {user?.email || 'user@example.com'}
             </Typography>
           </Box>
+          <SettingsIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
         </Box>
       </Box>
 
@@ -298,7 +299,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           Settings
         </MenuItem>
         <Divider />
-        <MenuItem onClick={() => { toggleColorMode(); handleMenuClose(); }}>
+        <MenuItem onClick={toggleColorMode}>
           <ListItemIcon>
             {mode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
           </ListItemIcon>

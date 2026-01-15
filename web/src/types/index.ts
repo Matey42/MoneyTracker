@@ -19,6 +19,9 @@ export interface Wallet {
   // For INVESTMENTS/CRYPTO/REAL_ESTATE: total market value of holdings
   balance: number;
 
+  // Daily change in value
+  dailyChange?: number;
+
   // Sharing
   isShared: boolean;
   memberCount?: number;
