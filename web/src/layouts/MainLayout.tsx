@@ -154,6 +154,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       height: '100%', 
       display: 'flex', 
       flexDirection: 'column',
+      caretColor: 'transparent',
       overflowY: 'auto',
       scrollbarWidth: 'none',
       msOverflowStyle: 'none',
@@ -161,12 +162,28 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         display: 'none',
       },
     }}>
-      <Box sx={{ p: 3, display: 'flex', alignItems: 'center', height: 72 }}>
+      <Box
+        sx={{
+          p: 3,
+          display: 'flex',
+          alignItems: 'center',
+          height: 72,
+          pointerEvents: 'none',
+          userSelect: 'none',
+        }}
+      >
         <Box
           component="img"
           src={mode === 'dark' ? mtDark : mtLight}
           alt="MoneyTracker"
-          sx={{ height: 144, width: '100%', objectFit: 'contain' }}
+          draggable={false}
+          sx={{
+            height: 144,
+            width: '100%',
+            objectFit: 'contain',
+            pointerEvents: 'none',
+            userSelect: 'none',
+          }}
         />
       </Box>
 
