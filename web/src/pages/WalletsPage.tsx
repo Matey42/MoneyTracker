@@ -1128,6 +1128,12 @@ const WalletsPage = () => {
               boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
               border: 1,
               borderColor: 'divider',
+              overflowY: 'auto',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              '&::-webkit-scrollbar': {
+                display: 'none',
+              },
             },
           },
         }}

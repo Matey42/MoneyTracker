@@ -97,17 +97,22 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [walletsOpen, setWalletsOpen] = useState(true);
 
-  // Dynamically compute which categories have wallets
+  // Predefined category order (same as WalletsPage)
+  const categoryOrder: WalletCategory[] = ['BANK_CASH', 'INVESTMENTS', 'CRYPTO', 'REAL_ESTATE', 'OTHER'];
+
+  // Dynamically compute which categories have wallets, sorted by predefined order
   const walletCategories = useMemo(() => {
     const categoriesWithWallets = new Set<WalletCategory>();
     wallets.forEach((wallet) => categoriesWithWallets.add(wallet.type));
     
-    return Array.from(categoriesWithWallets).map((category) => ({
-      text: getWalletLabel(category),
-      icon: categoryIcons[category],
-      path: `/wallets/${categorySlug[category]}`,
-      category,
-    }));
+    return categoryOrder
+      .filter((category) => categoriesWithWallets.has(category))
+      .map((category) => ({
+        text: getWalletLabel(category),
+        icon: categoryIcons[category],
+        path: `/wallets/${categorySlug[category]}`,
+        category,
+      }));
   }, [wallets]);
 
   if (!isAuthenticated) {
@@ -140,7 +145,17 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   };
 
   const drawer = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ 
+      height: '100%', 
+      display: 'flex', 
+      flexDirection: 'column',
+      overflowY: 'auto',
+      scrollbarWidth: 'none',
+      msOverflowStyle: 'none',
+      '&::-webkit-scrollbar': {
+        display: 'none',
+      },
+    }}>
       <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
         <WalletIcon sx={{ fontSize: 32, color: 'primary.main' }} />
         <Typography variant="h5" fontWeight={700} color="primary.main">
@@ -150,7 +165,17 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
       <Divider />
 
-      <List sx={{ flex: 1, px: 2, py: 2 }}>
+      <List sx={{ 
+        flex: 1, 
+        px: 2, 
+        py: 2,
+        overflowY: 'auto',
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+        '&::-webkit-scrollbar': {
+          display: 'none',
+        },
+      }}>
         {baseMenuItems.map((item) => (
           <Box key={item.text}>
             <ListItem disablePadding sx={{ mb: 0.5 }}>
@@ -385,6 +410,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
           backgroundColor: 'background.default',
           minHeight: '100vh',
+          height: '100vh',
           overflowY: 'auto',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
