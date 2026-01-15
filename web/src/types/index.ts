@@ -32,6 +32,7 @@ export interface Wallet {
   icon?: string;
   color?: string;
   isFavorite?: boolean;
+  favoriteOrder?: number;
   createdAt: string;
 }
 

@@ -23,10 +23,17 @@ import {
   Stack,
   ToggleButton,
   ToggleButtonGroup,
-  IconButton,
   Tooltip,
   Autocomplete,
   InputAdornment,
+  Popover,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  IconButton,
+  Checkbox,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import {
@@ -41,8 +48,9 @@ import {
   Home as RealEstateIcon,
   MoreHoriz as OtherIcon,
   ShowChart as InvestmentsIcon,
-  DragIndicator as DragIcon,
   Image as ImageIcon,
+  Close as CloseIcon,
+  DragIndicator as DragIcon,
 } from '@mui/icons-material';
 import { useAppDispatch } from '../hooks/useAppStore';
 import { fetchWalletsSuccess } from '../features/wallet/walletSlice';
@@ -50,18 +58,18 @@ import type { Wallet, WalletCategory } from '../types';
 import { formatCurrency, getRelativeTime } from '../utils/formatters';
 import { getWalletColor } from '../utils/walletConfig';
 
-// Mock data - added mock daily changes
+// Mock data - added mock daily changes and icons
 const mockWallets: Wallet[] = [
-  { id: '1', name: 'Personal Account', type: 'BANK_CASH', currency: 'PLN', balance: 8500.5, isOwner: true, isShared: false, isFavorite: true, createdAt: '2024-01-01', description: 'My main checking account', dailyChange: 125.30 },
-  { id: '2', name: 'Family Budget', type: 'BANK_CASH', currency: 'PLN', balance: 4200.0, isOwner: true, isShared: true, isFavorite: true, memberCount: 3, createdAt: '2024-01-15', description: 'Shared family expenses', dailyChange: -45.00 },
-  { id: '3', name: 'Emergency Savings', type: 'BANK_CASH', currency: 'PLN', balance: 15000.0, isOwner: true, isShared: false, createdAt: '2024-02-01', dailyChange: 0 },
-  { id: '4', name: 'Vacation Fund', type: 'BANK_CASH', currency: 'PLN', balance: 2720.0, isOwner: true, isShared: false, createdAt: '2024-03-01', dailyChange: 50.00 },
-  { id: '5', name: 'Business Account', type: 'BANK_CASH', currency: 'PLN', balance: 12500.0, isOwner: true, isShared: false, createdAt: '2024-04-01', dailyChange: 320.00 },
-  { id: '6', name: 'Shared Apartment', type: 'BANK_CASH', currency: 'PLN', balance: 800.0, isOwner: false, isShared: true, memberCount: 2, createdAt: '2024-05-01', dailyChange: -20.00 },
-  { id: '7', name: 'Stock Portfolio', type: 'INVESTMENTS', currency: 'PLN', balance: 45000.0, isOwner: true, isShared: false, isFavorite: true, createdAt: '2024-01-10', dailyChange: 890.50 },
-  { id: '8', name: 'Retirement Fund', type: 'INVESTMENTS', currency: 'PLN', balance: 82000.0, isOwner: true, isShared: false, createdAt: '2024-02-15', dailyChange: 450.00 },
-  { id: '9', name: 'Bitcoin Wallet', type: 'CRYPTO', currency: 'PLN', balance: 12500.0, isOwner: true, isShared: false, isFavorite: true, createdAt: '2024-03-01', dailyChange: -320.00 },
-  { id: '10', name: 'Ethereum Wallet', type: 'CRYPTO', currency: 'PLN', balance: 5600.0, isOwner: true, isShared: false, createdAt: '2024-03-15', dailyChange: 180.00 },
+  { id: '1', name: 'Personal Account', type: 'BANK_CASH', currency: 'PLN', balance: 8500.5, isOwner: true, isShared: false, isFavorite: true, createdAt: '2024-01-01', description: 'My main checking account', dailyChange: 125.30, icon: 'bank', favoriteOrder: 0 },
+  { id: '2', name: 'Family Budget', type: 'BANK_CASH', currency: 'PLN', balance: 4200.0, isOwner: true, isShared: true, isFavorite: true, memberCount: 3, createdAt: '2024-01-15', description: 'Shared family expenses', dailyChange: -45.00, icon: 'wallet', favoriteOrder: 1 },
+  { id: '3', name: 'Emergency Savings', type: 'BANK_CASH', currency: 'PLN', balance: 15000.0, isOwner: true, isShared: false, createdAt: '2024-02-01', dailyChange: 0, icon: 'safe' },
+  { id: '4', name: 'Vacation Fund', type: 'BANK_CASH', currency: 'PLN', balance: 2720.0, isOwner: true, isShared: false, createdAt: '2024-03-01', dailyChange: 50.00, icon: 'piggy' },
+  { id: '5', name: 'Business Account', type: 'BANK_CASH', currency: 'PLN', balance: 12500.0, isOwner: true, isShared: false, createdAt: '2024-04-01', dailyChange: 320.00, icon: 'briefcase' },
+  { id: '6', name: 'Shared Apartment', type: 'BANK_CASH', currency: 'PLN', balance: 800.0, isOwner: false, isShared: true, memberCount: 2, createdAt: '2024-05-01', dailyChange: -20.00, icon: 'house' },
+  { id: '7', name: 'Stock Portfolio', type: 'INVESTMENTS', currency: 'PLN', balance: 45000.0, isOwner: true, isShared: false, isFavorite: true, createdAt: '2024-01-10', dailyChange: 890.50, icon: 'chart', favoriteOrder: 0 },
+  { id: '8', name: 'Retirement Fund', type: 'INVESTMENTS', currency: 'PLN', balance: 82000.0, isOwner: true, isShared: false, createdAt: '2024-02-15', dailyChange: 450.00, icon: 'coins' },
+  { id: '9', name: 'Bitcoin Wallet', type: 'CRYPTO', currency: 'PLN', balance: 12500.0, isOwner: true, isShared: false, isFavorite: true, createdAt: '2024-03-01', dailyChange: -320.00, icon: 'bitcoin', favoriteOrder: 0 },
+  { id: '10', name: 'Ethereum Wallet', type: 'CRYPTO', currency: 'PLN', balance: 5600.0, isOwner: true, isShared: false, createdAt: '2024-03-15', dailyChange: 180.00, icon: 'coins' },
 ];
 
 const walletTypes: { value: WalletCategory; label: string }[] = [
@@ -158,7 +166,8 @@ const WalletsPage = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [trendPeriod, setTrendPeriod] = useState<'7D' | '30D' | 'YTD'>('7D');
-  const [draggedFavorite, setDraggedFavorite] = useState<string | null>(null);
+  const [favoritesAnchor, setFavoritesAnchor] = useState<{ el: HTMLElement; category: WalletCategory } | null>(null);
+  const [draggedFavoriteId, setDraggedFavoriteId] = useState<string | null>(null);
   const [newWallet, setNewWallet] = useState({
     name: '',
     type: 'BANK_CASH' as WalletCategory,
@@ -209,45 +218,46 @@ const WalletsPage = () => {
     dispatch(fetchWalletsSuccess(updated));
   };
 
-  // Drag and drop for favorites reordering
-  const handleDragStart = (walletId: string) => {
-    setDraggedFavorite(walletId);
+  // Drag and drop for favorites reordering in popover
+  const handleFavoriteDragStart = (walletId: string) => {
+    setDraggedFavoriteId(walletId);
   };
 
-  const handleDragOver = (e: React.DragEvent, targetId: string) => {
+  const handleFavoriteDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    if (!draggedFavorite || draggedFavorite === targetId) return;
   };
 
-  const handleDrop = (e: React.DragEvent, targetId: string, category: WalletCategory) => {
-    e.preventDefault();
-    if (!draggedFavorite || draggedFavorite === targetId) {
-      setDraggedFavorite(null);
+  const handleFavoriteDrop = (targetId: string, category: WalletCategory) => {
+    if (!draggedFavoriteId || draggedFavoriteId === targetId) {
+      setDraggedFavoriteId(null);
       return;
     }
 
-    // Reorder favorites within the category
-    const categoryWallets = wallets.filter(w => w.type === category && w.isFavorite);
-    const draggedIndex = categoryWallets.findIndex(w => w.id === draggedFavorite);
-    const targetIndex = categoryWallets.findIndex(w => w.id === targetId);
+    const categoryFavorites = wallets
+      .filter(w => w.type === category && w.isFavorite)
+      .sort((a, b) => (a.favoriteOrder ?? 0) - (b.favoriteOrder ?? 0));
+
+    const draggedIndex = categoryFavorites.findIndex(w => w.id === draggedFavoriteId);
+    const targetIndex = categoryFavorites.findIndex(w => w.id === targetId);
 
     if (draggedIndex !== -1 && targetIndex !== -1) {
-      const reordered = [...categoryWallets];
+      // Reorder: assign new favoriteOrder values
+      const reordered = [...categoryFavorites];
       const [removed] = reordered.splice(draggedIndex, 1);
       reordered.splice(targetIndex, 0, removed);
 
-      // Update wallet order (for now, just update state - in real app would save order)
       const updatedWallets = wallets.map(w => {
-        const newIndex = reordered.findIndex(r => r.id === w.id);
-        if (newIndex !== -1) {
-          return { ...w, favoriteOrder: newIndex };
+        const newOrder = reordered.findIndex(r => r.id === w.id);
+        if (newOrder !== -1) {
+          return { ...w, favoriteOrder: newOrder };
         }
         return w;
       });
+
       setWallets(updatedWallets);
       dispatch(fetchWalletsSuccess(updatedWallets));
     }
-    setDraggedFavorite(null);
+    setDraggedFavoriteId(null);
   };
 
   // Calculate totals
@@ -445,7 +455,7 @@ const WalletsPage = () => {
         </Box>
       </Box>
 
-      {/* Portfolio Overview - Minimalist Charts */}
+      {/* Portfolio Overview - Dashboard Cards */}
       <Box
         sx={{
           display: 'flex',
@@ -454,132 +464,195 @@ const WalletsPage = () => {
           flexDirection: { xs: 'column', md: 'row' },
         }}
       >
-        {/* Asset Allocation - Compact Donut */}
+        {/* Asset Allocation - Clean Donut */}
         <Card 
           variant="outlined" 
           sx={{ 
-            p: 2, 
-            flex: { xs: 1, md: '0 0 200px' },
+            p: 2.5, 
+            flex: { xs: 1, md: '0 0 280px' },
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
+            bgcolor: theme.palette.mode === 'dark' ? 'background.paper' : '#fff',
+            borderColor: theme.palette.mode === 'dark' ? 'divider' : '#e5e7eb',
           }}
         >
-          <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
-            Allocation
+          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+            Asset Allocation
           </Typography>
-          <Box sx={{ position: 'relative', width: 100, height: 100 }}>
-            <svg viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
-              {/* Background circle */}
-              <circle
-                cx="50"
-                cy="50"
-                r="40"
-                fill="none"
-                stroke={alpha(theme.palette.divider, 0.3)}
-                strokeWidth="16"
-              />
-              {/* Segments */}
-              {assetAllocation.reduce((acc, item) => {
-                const prevOffset = acc.offset;
-                const circumference = 2 * Math.PI * 40;
-                const strokeLength = (item.percentage / 100) * circumference;
-                const gap = 2;
-                acc.elements.push(
-                  <circle
-                    key={item.category}
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="none"
-                    stroke={item.color}
-                    strokeWidth="16"
-                    strokeDasharray={`${Math.max(0, strokeLength - gap)} ${circumference}`}
-                    strokeDashoffset={-prevOffset}
-                    strokeLinecap="round"
-                    style={{ transition: 'all 0.4s ease' }}
-                  />
-                );
-                acc.offset += strokeLength;
-                return acc;
-              }, { elements: [] as React.ReactNode[], offset: 0 }).elements}
-              {/* Center hole */}
-              <circle cx="50" cy="50" r="32" fill={theme.palette.background.paper} />
-            </svg>
-          </Box>
-          {/* Icon Legend - horizontal */}
-          <Box sx={{ display: 'flex', gap: 1.5, mt: 1.5, flexWrap: 'wrap', justifyContent: 'center' }}>
-            {assetAllocation.map((item) => (
-              <Tooltip 
-                key={item.category} 
-                title={`${item.label}: ${item.percentage.toFixed(0)}%`}
-                arrow
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            {/* Donut Chart */}
+            <Box sx={{ position: 'relative', width: 120, height: 120, flexShrink: 0 }}>
+              <svg viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
+                {/* Background circle */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="none"
+                  stroke={theme.palette.mode === 'dark' ? alpha(theme.palette.divider, 0.15) : '#f3f4f6'}
+                  strokeWidth="20"
+                />
+                {/* Segments */}
+                {assetAllocation.reduce((acc, item) => {
+                  const prevOffset = acc.offset;
+                  const circumference = 2 * Math.PI * 40;
+                  const strokeLength = (item.percentage / 100) * circumference;
+                  const gap = assetAllocation.length > 1 ? 2 : 0;
+                  acc.elements.push(
+                    <circle
+                      key={item.category}
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      fill="none"
+                      stroke={item.color}
+                      strokeWidth="20"
+                      strokeDasharray={`${Math.max(0, strokeLength - gap)} ${circumference}`}
+                      strokeDashoffset={-prevOffset}
+                      style={{ transition: 'all 0.5s ease' }}
+                    />
+                  );
+                  acc.offset += strokeLength;
+                  return acc;
+                }, { elements: [] as React.ReactNode[], offset: 0 }).elements}
+                {/* Center hole */}
+                <circle 
+                  cx="50" 
+                  cy="50" 
+                  r="30" 
+                  fill={theme.palette.mode === 'dark' ? theme.palette.background.paper : '#fff'}
+                />
+              </svg>
+              {/* Center text */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  textAlign: 'center',
+                }}
               >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 0.25,
-                  }}
-                >
-                  <Avatar
+                <Typography variant="h6" fontWeight={700} sx={{ lineHeight: 1, fontSize: 18 }}>
+                  {assetAllocation.length}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10 }}>
+                  categories
+                </Typography>
+              </Box>
+            </Box>
+            
+            {/* Legend - icons with percentages */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, flex: 1 }}>
+              {assetAllocation.map((item) => (
+                <Tooltip key={item.category} title={`${item.label}: ${formatCurrency(item.value)}`} arrow placement="right">
+                  <Box
                     sx={{
-                      width: 28,
-                      height: 28,
-                      bgcolor: alpha(item.color, 0.15),
-                      color: item.color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      cursor: 'pointer',
+                      '&:hover': { opacity: 0.8 },
                     }}
                   >
-                    {categoryIcons[item.category]}
-                  </Avatar>
-                  <Typography variant="caption" fontWeight={600} sx={{ fontSize: 10 }}>
-                    {item.percentage.toFixed(0)}%
-                  </Typography>
-                </Box>
-              </Tooltip>
-            ))}
+                    <Avatar
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        bgcolor: alpha(item.color, 0.15),
+                        color: item.color,
+                        fontSize: 16,
+                      }}
+                    >
+                      {categoryIcons[item.category]}
+                    </Avatar>
+                    <Typography variant="body2" fontWeight={600} sx={{ fontSize: 14 }}>
+                      {item.percentage.toFixed(0)}%
+                    </Typography>
+                  </Box>
+                </Tooltip>
+              ))}
+            </Box>
           </Box>
         </Card>
 
-        {/* Net Worth Trend - Enhanced */}
-        <Card variant="outlined" sx={{ p: 2, flex: 1 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Typography variant="caption" color="text.secondary">
-                Net Worth
+        {/* Net Worth Trend - Dashboard Card */}
+        <Card 
+          variant="outlined" 
+          sx={{ 
+            p: 2.5, 
+            flex: 1,
+            bgcolor: theme.palette.mode === 'dark' ? 'background.paper' : '#fff',
+            borderColor: theme.palette.mode === 'dark' ? 'divider' : '#e5e7eb',
+          }}
+        >
+          {/* Header with title, headline number, and toggle */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <Typography variant="subtitle2" fontWeight={600}>
+                  Net Worth
+                </Typography>
+                <Chip
+                  size="small"
+                  icon={trendChange >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />}
+                  label={`${trendChange >= 0 ? '+' : ''}${trendChangePercent.toFixed(1)}%`}
+                  sx={{
+                    height: 20,
+                    bgcolor: alpha(trendChange >= 0 ? '#16a34a' : '#dc2626', 0.1),
+                    color: trendChange >= 0 ? 'success.main' : 'error.main',
+                    fontWeight: 600,
+                    fontSize: 11,
+                    '& .MuiChip-icon': { fontSize: 12, color: 'inherit' },
+                    '& .MuiChip-label': { px: 0.75 },
+                  }}
+                />
+              </Box>
+              <Typography variant="h4" fontWeight={700}>
+                {formatCurrency(trendData[trendData.length - 1].value)}
               </Typography>
-              <Chip
-                size="small"
-                icon={trendChange >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />}
-                label={`${trendChange >= 0 ? '+' : ''}${formatCurrency(trendChange)} (${trendChangePercent.toFixed(1)}%)`}
-                sx={{
-                  height: 22,
-                  bgcolor: alpha(trendChange >= 0 ? '#16a34a' : '#dc2626', 0.12),
-                  color: trendChange >= 0 ? 'success.main' : 'error.main',
-                  fontWeight: 600,
-                  '& .MuiChip-icon': { fontSize: 14 },
-                }}
-              />
             </Box>
             <ToggleButtonGroup
               value={trendPeriod}
               exclusive
               onChange={(_, val) => val && setTrendPeriod(val)}
               size="small"
-              sx={{ '& .MuiToggleButton-root': { px: 1.5, py: 0.25, fontSize: 12 } }}
+              sx={{ 
+                bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.divider, 0.08) : '#f9fafb',
+                borderRadius: 2,
+                p: 0.25,
+                '& .MuiToggleButtonGroup-grouped': {
+                  border: 'none',
+                  borderRadius: '6px !important',
+                  mx: 0.25,
+                },
+                '& .MuiToggleButton-root': { 
+                  px: 1.5, 
+                  py: 0.5, 
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: 'text.secondary',
+                  '&.Mui-selected': {
+                    bgcolor: theme.palette.mode === 'dark' ? 'primary.main' : '#fff',
+                    color: theme.palette.mode === 'dark' ? 'primary.contrastText' : 'text.primary',
+                    fontWeight: 600,
+                    boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 1px 3px rgba(0,0,0,0.1)',
+                  },
+                } 
+              }}
             >
               <ToggleButton value="7D">7D</ToggleButton>
               <ToggleButton value="30D">30D</ToggleButton>
               <ToggleButton value="YTD">YTD</ToggleButton>
             </ToggleButtonGroup>
           </Box>
-          {/* Chart with data points */}
-          <Box sx={{ height: 80, position: 'relative' }}>
-            <svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 100 100">
+          
+          {/* Smooth Line Chart with gradient and gridlines */}
+          <Box sx={{ height: 100, position: 'relative', mx: -1 }}>
+            <svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 400 100">
               <defs>
-                <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={alpha(trendChange >= 0 ? theme.palette.success.main : theme.palette.error.main, 0.25)} />
+                <linearGradient id="trendAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={alpha(trendChange >= 0 ? theme.palette.success.main : theme.palette.error.main, 0.15)} />
                   <stop offset="100%" stopColor={alpha(trendChange >= 0 ? theme.palette.success.main : theme.palette.error.main, 0)} />
                 </linearGradient>
               </defs>
@@ -587,47 +660,94 @@ const WalletsPage = () => {
                 const min = Math.min(...trendData.map(d => d.value)) * 0.995;
                 const max = Math.max(...trendData.map(d => d.value)) * 1.005;
                 const range = max - min || 1;
+                const padding = { top: 5, bottom: 5 };
+                const chartHeight = 100 - padding.top - padding.bottom;
                 const points = trendData.map((d, i) => {
-                  const x = (i / (trendData.length - 1)) * 100;
-                  const y = 100 - ((d.value - min) / range) * 85 - 7.5;
+                  const x = 10 + (i / (trendData.length - 1)) * 380;
+                  const y = padding.top + chartHeight - ((d.value - min) / range) * chartHeight;
                   return { x, y, ...d };
                 });
-                const linePoints = points.map(p => `${p.x},${p.y}`).join(' ');
-                const areaPoints = `0,100 ${linePoints} 100,100`;
+                
+                // Create smooth curve path using bezier curves
+                const createSmoothPath = (pts: typeof points) => {
+                  if (pts.length < 2) return '';
+                  let path = `M ${pts[0].x} ${pts[0].y}`;
+                  for (let i = 0; i < pts.length - 1; i++) {
+                    const current = pts[i];
+                    const next = pts[i + 1];
+                    const cpx = (current.x + next.x) / 2;
+                    path += ` C ${cpx} ${current.y}, ${cpx} ${next.y}, ${next.x} ${next.y}`;
+                  }
+                  return path;
+                };
+                
+                const linePath = createSmoothPath(points);
+                const areaPath = `${linePath} L ${points[points.length-1].x} ${100 - padding.bottom} L ${points[0].x} ${100 - padding.bottom} Z`;
                 const lineColor = trendChange >= 0 ? theme.palette.success.main : theme.palette.error.main;
+                const gridColor = theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+                
                 return (
                   <>
-                    <polygon points={areaPoints} fill="url(#trendGradient)" />
-                    <polyline
-                      points={linePoints}
+                    {/* Vertical gridlines */}
+                    {points.map((p, i) => (
+                      <line
+                        key={i}
+                        x1={p.x}
+                        y1={padding.top}
+                        x2={p.x}
+                        y2={100 - padding.bottom}
+                        stroke={gridColor}
+                        strokeWidth="1"
+                        strokeDasharray={i === 0 || i === points.length - 1 ? "0" : "3,3"}
+                      />
+                    ))}
+                    {/* Gradient area */}
+                    <path d={areaPath} fill="url(#trendAreaGrad)" />
+                    {/* Smooth line */}
+                    <path
+                      d={linePath}
                       fill="none"
                       stroke={lineColor}
-                      strokeWidth="2"
+                      strokeWidth="2.5"
                       strokeLinecap="round"
-                      strokeLinejoin="round"
                     />
-                    {/* Data points */}
-                    {points.map((p, i) => (
-                      <g key={i}>
-                        <circle cx={p.x} cy={p.y} r="3" fill={theme.palette.background.paper} stroke={lineColor} strokeWidth="1.5" />
-                      </g>
-                    ))}
+                    {/* End point indicator */}
+                    <circle 
+                      cx={points[points.length-1].x} 
+                      cy={points[points.length-1].y} 
+                      r="4" 
+                      fill={lineColor}
+                    />
+                    <circle 
+                      cx={points[points.length-1].x} 
+                      cy={points[points.length-1].y} 
+                      r="6" 
+                      fill="none"
+                      stroke={lineColor}
+                      strokeWidth="1.5"
+                      opacity="0.4"
+                    />
                   </>
                 );
               })()}
             </svg>
           </Box>
-          {/* Labels with values */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
-            {trendData.filter((_, i) => i === 0 || i === trendData.length - 1 || i === Math.floor(trendData.length / 2)).map((d, i) => (
-              <Box key={i} sx={{ textAlign: 'center' }}>
-                <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10 }}>
-                  {d.label}
-                </Typography>
-                <Typography variant="caption" display="block" fontWeight={500} sx={{ fontSize: 10 }}>
-                  {formatCurrency(d.value)}
-                </Typography>
-              </Box>
+          
+          {/* X-axis labels - show all data points */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5, px: 0.5 }}>
+            {trendData.map((d, i) => (
+              <Typography 
+                key={i} 
+                variant="caption" 
+                color="text.secondary" 
+                sx={{ 
+                  fontSize: 10,
+                  fontWeight: i === trendData.length - 1 ? 600 : 400,
+                  color: i === trendData.length - 1 ? 'text.primary' : 'text.secondary',
+                }}
+              >
+                {d.label}
+              </Typography>
             ))}
           </Box>
         </Card>
@@ -654,7 +774,6 @@ const WalletsPage = () => {
           const hasWallets = group.items.length > 0;
           const color = getWalletColor(type.value);
           const dailyChange = group.dailyChange;
-          const nonFavorites = group.items.filter(w => !w.isFavorite);
 
           return (
             <Card
@@ -760,13 +879,11 @@ const WalletsPage = () => {
                     )}
                   </Box>
 
-                  {/* Favorites row - draggable + add button */}
+                  {/* Favorites row with + menu button on right */}
                   {hasWallets && (
                     <Box 
                       sx={{ 
                         display: 'flex', 
-                        gap: 1, 
-                        flexWrap: 'wrap',
                         alignItems: 'center',
                         mt: 1.5,
                         pt: 1.5,
@@ -775,82 +892,74 @@ const WalletsPage = () => {
                       }}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {/* Existing favorites - draggable */}
-                      {group.favorites.map((wallet) => (
-                        <Chip
-                          key={wallet.id}
-                          draggable
-                          onDragStart={() => handleDragStart(wallet.id)}
-                          onDragOver={(e) => handleDragOver(e, wallet.id)}
-                          onDrop={(e) => handleDrop(e, wallet.id, type.value)}
-                          icon={
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <DragIcon sx={{ fontSize: 14, color: 'text.disabled', mr: 0.25, cursor: 'grab' }} />
-                              <StarIcon sx={{ fontSize: 14, color: 'warning.main' }} />
-                            </Box>
-                          }
-                          label={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                              <Typography variant="body2" fontWeight={500}>
-                                {wallet.name}
-                              </Typography>
-                              <Typography variant="body2" fontWeight={600} color="primary.main">
-                                {formatCurrency(wallet.balance, wallet.currency)}
-                              </Typography>
-                            </Box>
-                          }
-                          onDelete={(e) => handleToggleFavorite(wallet.id, e as React.MouseEvent)}
-                          deleteIcon={<StarIcon sx={{ fontSize: 16, color: 'warning.main' }} />}
-                          onClick={() => navigate(`/wallets/${wallet.id}`)}
+                      {/* Favorites displayed with wallet icons */}
+                      <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', flex: 1 }}>
+                        {group.favorites
+                          .sort((a, b) => (a.favoriteOrder ?? 0) - (b.favoriteOrder ?? 0))
+                          .map((wallet) => {
+                            const walletIconEmoji = walletIcons.find(i => i.id === wallet.icon)?.icon || '💰';
+                            return (
+                              <Chip
+                                key={wallet.id}
+                                icon={<Box component="span" sx={{ fontSize: 14, ml: 0.5 }}>{walletIconEmoji}</Box>}
+                                label={
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    <Typography variant="body2" fontWeight={500} sx={{ fontSize: 13 }}>
+                                      {wallet.name}
+                                    </Typography>
+                                    <Typography variant="body2" fontWeight={600} color="primary.main" sx={{ fontSize: 13 }}>
+                                      {formatCurrency(wallet.balance, wallet.currency)}
+                                    </Typography>
+                                  </Box>
+                                }
+                                onClick={() => navigate(`/wallets/${wallet.id}`)}
+                                sx={{
+                                  bgcolor: alpha(color, 0.06),
+                                  borderColor: alpha(color, 0.2),
+                                  '&:hover': { 
+                                    bgcolor: alpha(color, 0.12),
+                                    borderColor: color,
+                                  },
+                                  transition: 'all 0.15s',
+                                  cursor: 'pointer',
+                                }}
+                                variant="outlined"
+                                size="small"
+                              />
+                            );
+                          })}
+                        {group.favorites.length === 0 && (
+                          <Typography variant="caption" color="text.secondary" sx={{ py: 0.5 }}>
+                            No favorites yet
+                          </Typography>
+                        )}
+                      </Box>
+                      
+                      {/* Add/Manage favorites button - on right */}
+                      <Tooltip title="Manage favorites" arrow>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => setFavoritesAnchor({ el: e.currentTarget, category: type.value })}
                           sx={{
-                            bgcolor: alpha(color, 0.08),
-                            borderColor: alpha(color, 0.2),
-                            opacity: draggedFavorite === wallet.id ? 0.5 : 1,
-                            '&:hover': { 
-                              bgcolor: alpha(color, 0.15),
-                            },
-                            transition: 'all 0.2s',
-                            cursor: 'pointer',
-                            '& .MuiChip-deleteIcon': {
-                              '&:hover': { color: 'text.secondary' },
+                            ml: 1,
+                            width: 28,
+                            height: 28,
+                            border: 1,
+                            borderColor: alpha(color, 0.3),
+                            borderStyle: 'dashed',
+                            color: 'text.secondary',
+                            flexShrink: 0,
+                            '&:hover': {
+                              borderColor: color,
+                              borderStyle: 'solid',
+                              bgcolor: alpha(color, 0.08),
+                              color: color,
                             },
                           }}
-                          variant="outlined"
-                          size="small"
-                        />
-                      ))}
-                      
-                      {/* Add favorite button - shows non-favorites */}
-                      {nonFavorites.length > 0 && (
-                        <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-                          {nonFavorites.slice(0, 3).map((wallet) => (
-                            <Tooltip key={wallet.id} title={`Add ${wallet.name} to favorites`} arrow>
-                              <IconButton
-                                size="small"
-                                onClick={(e) => handleToggleFavorite(wallet.id, e)}
-                                sx={{
-                                  width: 28,
-                                  height: 28,
-                                  border: 1,
-                                  borderColor: 'divider',
-                                  borderStyle: 'dashed',
-                                  '&:hover': {
-                                    borderColor: 'warning.main',
-                                    bgcolor: alpha(theme.palette.warning.main, 0.08),
-                                  },
-                                }}
-                              >
-                                <StarBorderIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
-                              </IconButton>
-                            </Tooltip>
-                          ))}
-                          {nonFavorites.length > 3 && (
-                            <Typography variant="caption" color="text.secondary">
-                              +{nonFavorites.length - 3}
-                            </Typography>
-                          )}
-                        </Box>
-                      )}
+                        >
+                          <AddIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      </Tooltip>
                     </Box>
                   )}
                 </CardContent>
@@ -1002,6 +1111,161 @@ const WalletsPage = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Favorites Management Popover */}
+      <Popover
+        open={Boolean(favoritesAnchor)}
+        anchorEl={favoritesAnchor?.el}
+        onClose={() => setFavoritesAnchor(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        slotProps={{
+          paper: {
+            sx: {
+              width: 320,
+              maxHeight: 400,
+              mt: 1,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+              border: 1,
+              borderColor: 'divider',
+            },
+          },
+        }}
+      >
+        {favoritesAnchor && (() => {
+          const category = favoritesAnchor.category;
+          const categoryWallets = wallets.filter(w => w.type === category);
+          const favorites = categoryWallets
+            .filter(w => w.isFavorite)
+            .sort((a, b) => (a.favoriteOrder ?? 0) - (b.favoriteOrder ?? 0));
+          const nonFavorites = categoryWallets.filter(w => !w.isFavorite);
+          const color = getWalletColor(category);
+
+          return (
+            <Box>
+              {/* Header */}
+              <Box sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography variant="subtitle2" fontWeight={600}>
+                  Manage Favorites
+                </Typography>
+                <IconButton size="small" onClick={() => setFavoritesAnchor(null)}>
+                  <CloseIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              </Box>
+
+              {/* Current favorites with drag-to-reorder */}
+              {favorites.length > 0 && (
+                <Box sx={{ p: 1.5, borderBottom: 1, borderColor: 'divider' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ px: 0.5, mb: 1, display: 'block' }}>
+                    Favorites (drag to reorder)
+                  </Typography>
+                  <List dense disablePadding>
+                    {favorites.map((wallet) => {
+                      const walletIconEmoji = walletIcons.find(i => i.id === wallet.icon)?.icon || '💰';
+                      const isDragging = draggedFavoriteId === wallet.id;
+                      return (
+                        <ListItem
+                          key={wallet.id}
+                          disablePadding
+                          sx={{ mb: 0.5 }}
+                          draggable
+                          onDragStart={() => handleFavoriteDragStart(wallet.id)}
+                          onDragOver={handleFavoriteDragOver}
+                          onDrop={() => handleFavoriteDrop(wallet.id, category)}
+                          onDragEnd={() => setDraggedFavoriteId(null)}
+                          secondaryAction={
+                            <IconButton 
+                              size="small" 
+                              onClick={(e) => { handleToggleFavorite(wallet.id, e); }}
+                            >
+                              <CloseIcon sx={{ fontSize: 14, color: 'error.main' }} />
+                            </IconButton>
+                          }
+                        >
+                          <Box 
+                            sx={{ 
+                              display: 'flex',
+                              alignItems: 'center',
+                              flex: 1,
+                              borderRadius: 1, 
+                              bgcolor: isDragging ? alpha(color, 0.15) : alpha(color, 0.06),
+                              py: 0.75,
+                              px: 1,
+                              pr: 5,
+                              cursor: 'grab',
+                              border: isDragging ? `2px dashed ${color}` : '2px solid transparent',
+                              transition: 'all 0.15s',
+                              '&:hover': {
+                                bgcolor: alpha(color, 0.1),
+                              },
+                              '&:active': {
+                                cursor: 'grabbing',
+                              },
+                            }}
+                          >
+                            <DragIcon sx={{ fontSize: 16, color: 'text.disabled', mr: 0.5 }} />
+                            <Box component="span" sx={{ fontSize: 16, mr: 1 }}>{walletIconEmoji}</Box>
+                            <Typography variant="body2" fontWeight={500}>
+                              {wallet.name}
+                            </Typography>
+                          </Box>
+                        </ListItem>
+                      );
+                    })}
+                  </List>
+                </Box>
+              )}
+
+              {/* Available wallets to add */}
+              {nonFavorites.length > 0 && (
+                <Box sx={{ p: 1.5 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ px: 0.5, mb: 1, display: 'block' }}>
+                    Add to favorites
+                  </Typography>
+                  <List dense disablePadding>
+                    {nonFavorites.map((wallet) => {
+                      const walletIconEmoji = walletIcons.find(i => i.id === wallet.icon)?.icon || '💰';
+                      return (
+                        <ListItem key={wallet.id} disablePadding sx={{ mb: 0.5 }}>
+                          <ListItemButton 
+                            onClick={(e) => handleToggleFavorite(wallet.id, e as unknown as React.MouseEvent)}
+                            sx={{ borderRadius: 1, py: 0.75 }}
+                          >
+                            <ListItemIcon sx={{ minWidth: 32 }}>
+                              <Checkbox
+                                edge="start"
+                                checked={false}
+                                icon={<StarBorderIcon sx={{ fontSize: 18 }} />}
+                                checkedIcon={<StarIcon sx={{ fontSize: 18, color: 'warning.main' }} />}
+                                sx={{ p: 0 }}
+                              />
+                            </ListItemIcon>
+                            <Box component="span" sx={{ fontSize: 16, mr: 1 }}>{walletIconEmoji}</Box>
+                            <ListItemText 
+                              primary={wallet.name}
+                              secondary={formatCurrency(wallet.balance)}
+                              primaryTypographyProps={{ variant: 'body2' }}
+                              secondaryTypographyProps={{ variant: 'caption' }}
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                      );
+                    })}
+                  </List>
+                </Box>
+              )}
+
+              {categoryWallets.length === 0 && (
+                <Box sx={{ p: 3, textAlign: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No wallets in this category
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          );
+        })()}
+      </Popover>
     </Box>
   );
 };
