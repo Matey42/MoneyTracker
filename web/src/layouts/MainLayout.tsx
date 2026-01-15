@@ -100,7 +100,10 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const [walletsOpen, setWalletsOpen] = useState(true);
 
   // Predefined category order (same as WalletsPage)
-  const categoryOrder: WalletCategory[] = ['BANK_CASH', 'INVESTMENTS', 'CRYPTO', 'REAL_ESTATE', 'OTHER'];
+  const categoryOrder: WalletCategory[] = useMemo(
+    () => ['BANK_CASH', 'INVESTMENTS', 'CRYPTO', 'REAL_ESTATE', 'OTHER'],
+    []
+  );
 
   // Dynamically compute which categories have wallets, sorted by predefined order
   const walletCategories = useMemo(() => {
@@ -115,7 +118,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         path: `/wallets/${categorySlug[category]}`,
         category,
       }));
-  }, [wallets]);
+  }, [wallets, categoryOrder]);
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

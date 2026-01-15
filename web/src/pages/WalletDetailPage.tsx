@@ -45,9 +45,9 @@ import { getWalletLabel, getWalletColor } from '../utils/walletConfig';
 
 // Mock data
 const mockWallets: Wallet[] = [
-  { id: '1', name: 'Personal Account', type: 'BANK', currency: 'PLN', balance: 8500.5, isOwner: true, isShared: false, createdAt: '2024-01-01', description: 'My main checking account' },
-  { id: '2', name: 'Family Budget', type: 'BANK', currency: 'PLN', balance: 4200.0, isOwner: true, isShared: true, memberCount: 3, createdAt: '2024-01-15', description: 'Shared family expenses' },
-  { id: '3', name: 'Emergency Savings', type: 'BANK', currency: 'PLN', balance: 15000.0, isOwner: true, isShared: false, createdAt: '2024-02-01' },
+  { id: '1', name: 'Personal Account', type: 'BANK_CASH', currency: 'PLN', balance: 8500.5, isOwner: true, isShared: false, createdAt: '2024-01-01', description: 'My main checking account' },
+  { id: '2', name: 'Family Budget', type: 'BANK_CASH', currency: 'PLN', balance: 4200.0, isOwner: true, isShared: true, memberCount: 3, createdAt: '2024-01-15', description: 'Shared family expenses' },
+  { id: '3', name: 'Emergency Savings', type: 'BANK_CASH', currency: 'PLN', balance: 15000.0, isOwner: true, isShared: false, createdAt: '2024-02-01' },
 ];
 
 const mockTransactions: Transaction[] = [
