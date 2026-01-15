@@ -43,6 +43,8 @@ import { logout } from '../features/auth/authSlice';
 import { useColorMode } from '../contexts/ColorModeContext';
 import type { WalletCategory } from '../types';
 import { getWalletLabel } from '../utils/walletConfig';
+import mtDark from '../assets/mt_dark.png';
+import mtLight from '../assets/mt_light.png';
 
 const DRAWER_WIDTH = 260;
 
@@ -156,11 +158,13 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         display: 'none',
       },
     }}>
-      <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <WalletIcon sx={{ fontSize: 32, color: 'primary.main' }} />
-        <Typography variant="h5" fontWeight={700} color="primary.main">
-          MoneyTracker
-        </Typography>
+      <Box sx={{ p: 3, display: 'flex', alignItems: 'center', height: 72 }}>
+        <Box
+          component="img"
+          src={mode === 'dark' ? mtDark : mtLight}
+          alt="MoneyTracker"
+          sx={{ height: 144, width: '100%', objectFit: 'contain' }}
+        />
       </Box>
 
       <Divider />
