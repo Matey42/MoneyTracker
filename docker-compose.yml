@@ -1,42 +1,45 @@
 services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: moneytracker-db
+    environment:
+      POSTGRES_DB: moneytracker
+      POSTGRES_USER: moneytracker
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-localdev123}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moneytracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Backend
+  backend:
+    build: ./backend
+    container_name: moneytracker-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/moneytracker
+      SPRING_DATASOURCE_USERNAME: moneytracker
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-localdev123}
+    ports:
+      - "8080:8080"
+
   # React Frontend
   frontend:
     build: ./web
     container_name: moneytracker-web
+    depends_on:
+      - backend
     ports:
       - "80:80"
 
-  # TODO: Uncomment when backend is ready
-  # postgres:
-  #   image: postgres:16-alpine
-  #   container_name: moneytracker-db
-  #   environment:
-  #     POSTGRES_DB: moneytracker
-  #     POSTGRES_USER: moneytracker
-  #     POSTGRES_PASSWORD: ${DB_PASSWORD:-localdev123}
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U moneytracker"]
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 5
+volumes:
+  postgres_data:
 
-  # backend:
-  #   build: ./backend
-  #   container_name: moneytracker-api
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   environment:
-  #     SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/moneytracker
-  #     SPRING_DATASOURCE_USERNAME: moneytracker
-  #     SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-localdev123}
-  #     SPRING_PROFILES_ACTIVE: docker
-  #   ports:
-  #     - "8080:8080"
-
-# volumes:
-#   postgres_data:
