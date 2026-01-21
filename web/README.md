@@ -43,6 +43,14 @@ export default defineConfig([
 ])
 ```
 
+## API modes
+
+Create a `.env` file (see `.env.example`) to switch between mock and backend-driven modes:
+
+- `VITE_API_MODE=mock` uses mock auth + mock data for fast UI work.
+- `VITE_API_MODE=hybrid` uses backend auth with mocked wallets/transactions.
+- `VITE_API_MODE=api` uses backend auth and real data endpoints.
+
 You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
 ```js

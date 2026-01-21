@@ -17,11 +17,13 @@ import {
   SettingsPage,
   ProfilePage,
 } from './pages';
+import AuthBootstrap from './components/AuthBootstrap';
 
 function AppContent() {
   return (
     <>
       <CssBaseline />
+      <AuthBootstrap />
       <BrowserRouter>
         <Routes>
           {/* Auth routes */}

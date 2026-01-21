@@ -53,24 +53,11 @@ import {
   DragIndicator as DragIcon,
 } from '@mui/icons-material';
 import { useAppDispatch } from '../hooks/useAppStore';
-import { fetchWalletsSuccess } from '../features/wallet/walletSlice';
+import { fetchWalletsFailure, fetchWalletsStart, fetchWalletsSuccess } from '../features/wallet/walletSlice';
 import type { Wallet, WalletCategory } from '../types';
 import { formatCurrency, getRelativeTime } from '../utils/formatters';
 import { getWalletColor } from '../utils/walletConfig';
-
-// Mock data - added mock daily changes and icons
-const mockWallets: Wallet[] = [
-  { id: '1', name: 'Personal Account', type: 'BANK_CASH', currency: 'PLN', balance: 8500.5, isOwner: true, isShared: false, isFavorite: true, createdAt: '2024-01-01', description: 'My main checking account', dailyChange: 125.30, icon: 'bank', favoriteOrder: 0 },
-  { id: '2', name: 'Family Budget', type: 'BANK_CASH', currency: 'PLN', balance: 4200.0, isOwner: true, isShared: true, isFavorite: true, memberCount: 3, createdAt: '2024-01-15', description: 'Shared family expenses', dailyChange: -45.00, icon: 'wallet', favoriteOrder: 1 },
-  { id: '3', name: 'Emergency Savings', type: 'BANK_CASH', currency: 'PLN', balance: 15000.0, isOwner: true, isShared: false, createdAt: '2024-02-01', dailyChange: 0, icon: 'safe' },
-  { id: '4', name: 'Vacation Fund', type: 'BANK_CASH', currency: 'PLN', balance: 2720.0, isOwner: true, isShared: false, createdAt: '2024-03-01', dailyChange: 50.00, icon: 'piggy' },
-  { id: '5', name: 'Business Account', type: 'BANK_CASH', currency: 'PLN', balance: 12500.0, isOwner: true, isShared: false, createdAt: '2024-04-01', dailyChange: 320.00, icon: 'briefcase' },
-  { id: '6', name: 'Shared Apartment', type: 'BANK_CASH', currency: 'PLN', balance: 800.0, isOwner: false, isShared: true, memberCount: 2, createdAt: '2024-05-01', dailyChange: -20.00, icon: 'house' },
-  { id: '7', name: 'Stock Portfolio', type: 'INVESTMENTS', currency: 'PLN', balance: 45000.0, isOwner: true, isShared: false, isFavorite: true, createdAt: '2024-01-10', dailyChange: 890.50, icon: 'chart', favoriteOrder: 0 },
-  { id: '8', name: 'Retirement Fund', type: 'INVESTMENTS', currency: 'PLN', balance: 82000.0, isOwner: true, isShared: false, createdAt: '2024-02-15', dailyChange: 450.00, icon: 'coins' },
-  { id: '9', name: 'Bitcoin Wallet', type: 'CRYPTO', currency: 'PLN', balance: 12500.0, isOwner: true, isShared: false, isFavorite: true, createdAt: '2024-03-01', dailyChange: -320.00, icon: 'bitcoin', favoriteOrder: 0 },
-  { id: '10', name: 'Ethereum Wallet', type: 'CRYPTO', currency: 'PLN', balance: 5600.0, isOwner: true, isShared: false, createdAt: '2024-03-15', dailyChange: 180.00, icon: 'coins' },
-];
+import { walletsService } from '../api/wallets';
 
 const walletTypes: { value: WalletCategory; label: string }[] = [
   { value: 'BANK_CASH', label: 'Bank & Cash' },
@@ -178,11 +165,18 @@ const WalletsPage = () => {
 
   useEffect(() => {
     const fetchWallets = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      setWallets(mockWallets);
-      dispatch(fetchWalletsSuccess(mockWallets)); // Update Redux store for sidebar
-      setLastUpdated(new Date());
-      setIsLoading(false);
+      dispatch(fetchWalletsStart());
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        const data = await walletsService.getWallets();
+        setWallets(data);
+        dispatch(fetchWalletsSuccess(data)); // Update Redux store for sidebar
+        setLastUpdated(new Date());
+      } catch (error) {
+        dispatch(fetchWalletsFailure(error instanceof Error ? error.message : 'Failed to load wallets'));
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchWallets();
   }, [dispatch]);

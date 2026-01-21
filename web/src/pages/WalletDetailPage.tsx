@@ -39,36 +39,12 @@ import {
   Delete as DeleteIcon,
   AccountBalanceWallet as WalletIcon,
 } from '@mui/icons-material';
-import type { Wallet, Transaction, TransactionType, Category } from '../types';
+import type { Wallet, Transaction, TransactionType } from '../types';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { getWalletLabel, getWalletColor } from '../utils/walletConfig';
-
-// Mock data
-const mockWallets: Wallet[] = [
-  { id: '1', name: 'Personal Account', type: 'BANK_CASH', currency: 'PLN', balance: 8500.5, isOwner: true, isShared: false, createdAt: '2024-01-01', description: 'My main checking account' },
-  { id: '2', name: 'Family Budget', type: 'BANK_CASH', currency: 'PLN', balance: 4200.0, isOwner: true, isShared: true, memberCount: 3, createdAt: '2024-01-15', description: 'Shared family expenses' },
-  { id: '3', name: 'Emergency Savings', type: 'BANK_CASH', currency: 'PLN', balance: 15000.0, isOwner: true, isShared: false, createdAt: '2024-02-01' },
-];
-
-const mockTransactions: Transaction[] = [
-  { id: '1', walletId: '1', userId: '1', type: 'EXPENSE', amount: 125.5, currency: 'PLN', description: 'Weekly groceries at Biedronka', categoryId: '1', transactionDate: '2024-12-13' },
-  { id: '2', walletId: '1', userId: '1', type: 'INCOME', amount: 5000.0, currency: 'PLN', description: 'Monthly salary', categoryId: '2', transactionDate: '2024-12-10' },
-  { id: '3', walletId: '2', userId: '1', type: 'EXPENSE', amount: 89.99, currency: 'PLN', description: 'Netflix subscription', categoryId: '3', transactionDate: '2024-12-09' },
-  { id: '4', walletId: '1', userId: '1', type: 'EXPENSE', amount: 450.0, currency: 'PLN', description: 'Electric bill December', categoryId: '4', transactionDate: '2024-12-08' },
-  { id: '5', walletId: '3', userId: '1', type: 'INCOME', amount: 500.0, currency: 'PLN', description: 'Transfer to savings', categoryId: '5', transactionDate: '2024-12-05' },
-  { id: '6', walletId: '1', userId: '1', type: 'EXPENSE', amount: 65.0, currency: 'PLN', description: 'Uber rides', categoryId: '6', transactionDate: '2024-12-04' },
-];
-
-const mockCategories: Category[] = [
-  { id: '1', name: 'Groceries', type: 'EXPENSE', icon: 'shopping_cart', color: '#FF9800'},
-  { id: '2', name: 'Salary', type: 'INCOME', icon: 'work', color: '#4CAF50'},
-  { id: '3', name: 'Entertainment', type: 'EXPENSE', icon: 'movie', color: '#9C27B0'},
-  { id: '4', name: 'Bills & Utilities', type: 'EXPENSE', icon: 'receipt', color: '#607D8B'},
-  { id: '5', name: 'Other Income', type: 'INCOME', icon: 'attach_money', color: '#9C27B0'},
-  { id: '6', name: 'Transport', type: 'EXPENSE', icon: 'directions_car', color: '#2196F3'},
-  { id: '7', name: 'Food & Dining', type: 'EXPENSE', icon: 'restaurant', color: '#FF5722'},
-  { id: '8', name: 'Freelance', type: 'INCOME', icon: 'laptop', color: '#8BC34A'},
-];
+import { walletsService } from '../api/wallets';
+import { transactionsService } from '../api/transactions';
+import { mockCategories } from '../api/mocks/transactions';
 
 // Category lookup helpers
 const getCategoryById = (id?: string) => mockCategories.find((c) => c.id === id);
@@ -94,11 +70,18 @@ const WalletDetailPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const foundWallet = mockWallets.find((w) => w.id === id);
-      setWallet(foundWallet || null);
-      setTransactions(mockTransactions.filter((t) => t.walletId === id));
-      setIsLoading(false);
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        const foundWallet = id ? await walletsService.getWallet(id) : null;
+        setWallet(foundWallet || null);
+        const data = id ? await transactionsService.getTransactions(id) : [];
+        setTransactions(data);
+      } catch {
+        setWallet(null);
+        setTransactions([]);
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchData();
   }, [id]);

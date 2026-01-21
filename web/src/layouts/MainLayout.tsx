@@ -45,6 +45,7 @@ import type { WalletCategory } from '../types';
 import { getWalletLabel } from '../utils/walletConfig';
 import mtDark from '../assets/mt_dark.png';
 import mtLight from '../assets/mt_light.png';
+import { authService } from '../api/authService';
 
 const DRAWER_WIDTH = 260;
 
@@ -136,10 +137,16 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
-    dispatch(logout());
-    handleMenuClose();
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } catch {
+      // If the backend logout fails, still clear local auth state.
+    } finally {
+      dispatch(logout());
+      handleMenuClose();
+      navigate('/login');
+    }
   };
 
   const handleNavigation = (path: string) => {

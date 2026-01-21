@@ -1,10 +1,11 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { AuthState, User } from '../../types';
+import { tokenStorage } from '../../api/tokenStorage';
 
 const initialState: AuthState = {
   user: null,
-  accessToken: localStorage.getItem('accessToken'),
-  isAuthenticated: !!localStorage.getItem('accessToken'),
+  accessToken: tokenStorage.getAccessToken(),
+  isAuthenticated: !!tokenStorage.getAccessToken(),
   isLoading: false,
   error: null,
 };
@@ -17,13 +18,13 @@ const authSlice = createSlice({
       state.isLoading = true;
       state.error = null;
     },
-    loginSuccess: (state, action: PayloadAction<{ user: User; accessToken: string }>) => {
+    loginSuccess: (state, action: PayloadAction<{ user: User; accessToken: string; refreshToken?: string }>) => {
       state.isLoading = false;
       state.isAuthenticated = true;
       state.user = action.payload.user;
       state.accessToken = action.payload.accessToken;
       state.error = null;
-      localStorage.setItem('accessToken', action.payload.accessToken);
+      tokenStorage.setTokens(action.payload.accessToken, action.payload.refreshToken);
     },
     loginFailure: (state, action: PayloadAction<string>) => {
       state.isLoading = false;
@@ -37,8 +38,7 @@ const authSlice = createSlice({
       state.user = null;
       state.accessToken = null;
       state.error = null;
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      tokenStorage.clear();
     },
     setUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;

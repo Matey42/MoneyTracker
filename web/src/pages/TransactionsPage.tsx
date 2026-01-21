@@ -38,48 +38,21 @@ import {
   Delete as DeleteIcon,
   AccountBalanceWallet as WalletIcon,
 } from '@mui/icons-material';
-import type { Transaction, TransactionType, Category, Wallet } from '../types';
+import type { Transaction, TransactionType, Wallet } from '../types';
 import { formatCurrency, formatDate } from '../utils/formatters';
-
-// Mock wallets data
-const mockWallets: Wallet[] = [
-  { id: '1', name: 'Personal Account', type: 'BANK_CASH', currency: 'PLN', balance: 8500.5, isOwner: true, isShared: false, createdAt: '2024-01-01' },
-  { id: '2', name: 'Family Budget', type: 'BANK_CASH', currency: 'PLN', balance: 4200.0, isOwner: true, isShared: false, createdAt: '2024-01-15' },
-  { id: '3', name: 'Emergency Savings', type: 'BANK_CASH', currency: 'PLN', balance: 15000.0, isOwner: true, isShared: false, createdAt: '2024-02-01' },
-];
-
-// Mock categories (keep minimal fields matching `Category` type)
-const mockCategories: Category[] = [
-  { id: '1', name: 'Groceries', type: 'EXPENSE', icon: 'shopping_cart', color: '#FF9800' },
-  { id: '2', name: 'Salary', type: 'INCOME', icon: 'work', color: '#4CAF50' },
-  { id: '3', name: 'Entertainment', type: 'EXPENSE', icon: 'movie', color: '#9C27B0' },
-  { id: '4', name: 'Bills & Utilities', type: 'EXPENSE', icon: 'receipt', color: '#607D8B' },
-  { id: '5', name: 'Other Income', type: 'INCOME', icon: 'attach_money', color: '#9C27B0' },
-  { id: '6', name: 'Transport', type: 'EXPENSE', icon: 'directions_car', color: '#2196F3' },
-  { id: '7', name: 'Food & Dining', type: 'EXPENSE', icon: 'restaurant', color: '#FF5722' },
-  { id: '8', name: 'Freelance', type: 'INCOME', icon: 'laptop', color: '#8BC34A' },
-];
+import { walletsService } from '../api/wallets';
+import { transactionsService } from '../api/transactions';
+import { mockCategories } from '../api/mocks/transactions';
 
 // Category lookup helpers
 const getCategoryById = (id?: string) => mockCategories.find((c) => c.id === id);
 const getCategoryName = (id?: string) => getCategoryById(id)?.name || 'Uncategorized';
 const getCategoryColor = (id?: string) => getCategoryById(id)?.color || '#9E9E9E';
 
-// Mock transactions using only fields from the `Transaction` type
-const mockTransactions: Transaction[] = [
-  { id: '1', walletId: '1', userId: '1', type: 'EXPENSE', amount: 125.5, currency: 'PLN', description: 'Weekly groceries at Biedronka', categoryId: '1', transactionDate: '2024-12-13' },
-  { id: '2', walletId: '1', userId: '1', type: 'INCOME', amount: 5000.0, currency: 'PLN', description: 'Monthly salary', categoryId: '2', transactionDate: '2024-12-10' },
-  { id: '3', walletId: '2', userId: '1', type: 'EXPENSE', amount: 89.99, currency: 'PLN', description: 'Netflix subscription', categoryId: '3', transactionDate: '2024-12-09' },
-  { id: '4', walletId: '1', userId: '1', type: 'EXPENSE', amount: 450.0, currency: 'PLN', description: 'Electric bill December', categoryId: '4', transactionDate: '2024-12-08' },
-  { id: '5', walletId: '3', userId: '1', type: 'INCOME', amount: 500.0, currency: 'PLN', description: 'Transfer to savings', categoryId: '5', transactionDate: '2024-12-05' },
-  { id: '6', walletId: '1', userId: '1', type: 'EXPENSE', amount: 65.0, currency: 'PLN', description: 'Uber rides', categoryId: '6', transactionDate: '2024-12-04' },
-  { id: '7', walletId: '1', userId: '1', type: 'EXPENSE', amount: 180.0, currency: 'PLN', description: 'Restaurant dinner', categoryId: '7', transactionDate: '2024-12-03' },
-  { id: '8', walletId: '1', userId: '1', type: 'INCOME', amount: 250.0, currency: 'PLN', description: 'Freelance project', categoryId: '8', transactionDate: '2024-12-02' },
-];
-
 const TransactionsPage = () => {
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [wallets, setWallets] = useState<Wallet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -99,9 +72,20 @@ const TransactionsPage = () => {
 
   useEffect(() => {
     const fetchTransactions = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      setTransactions(mockTransactions);
-      setIsLoading(false);
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        const [transactionsData, walletsData] = await Promise.all([
+          transactionsService.getTransactions(),
+          walletsService.getWallets(),
+        ]);
+        setTransactions(transactionsData);
+        setWallets(walletsData);
+      } catch {
+        setTransactions([]);
+        setWallets([]);
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchTransactions();
   }, []);
@@ -116,11 +100,11 @@ const TransactionsPage = () => {
   });
 
   const getWalletName = (walletId: string) => {
-    return mockWallets.find((w) => w.id === walletId)?.name || 'Unknown Wallet';
+    return wallets.find((w) => w.id === walletId)?.name || 'Unknown Wallet';
   };
 
   const handleCreateTransaction = () => {
-    const wallet = mockWallets.find((w) => w.id === newTransaction.walletId);
+    const wallet = wallets.find((w) => w.id === newTransaction.walletId);
     const transaction: Transaction = {
       id: String(Date.now()),
       walletId: newTransaction.walletId,
@@ -242,7 +226,7 @@ const TransactionsPage = () => {
                   onChange={(e) => setWalletFilter(e.target.value)}
                 >
                   <MenuItem value="ALL">All Wallets</MenuItem>
-                  {mockWallets.map((wallet) => (
+                  {wallets.map((wallet) => (
                     <MenuItem key={wallet.id} value={wallet.id}>
                       {wallet.name}
                     </MenuItem>
@@ -414,7 +398,7 @@ const TransactionsPage = () => {
                   label="Wallet"
                   onChange={(e) => setNewTransaction({ ...newTransaction, walletId: e.target.value })}
                 >
-                  {mockWallets.map((wallet) => (
+                  {wallets.map((wallet) => (
                     <MenuItem key={wallet.id} value={wallet.id}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <WalletIcon sx={{ color: 'text.secondary', fontSize: 20 }} />

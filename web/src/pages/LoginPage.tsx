@@ -20,27 +20,8 @@ import {
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../hooks/useAppStore';
 import { loginSuccess, loginFailure, loginStart, clearError } from '../features/auth/authSlice';
-
-// Mock login for development
-const mockLogin = async (email: string, password: string) => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  
-  if (email === 'demo@example.com' && password === 'password') {
-    return {
-      user: {
-        id: '1',
-        email: 'demo@example.com',
-        firstName: 'Demo',
-        lastName: 'User',
-        isActive: true,
-        createdAt: new Date().toISOString(),
-      },
-      accessToken: 'mock-access-token',
-      refreshToken: 'mock-refresh-token',
-    };
-  }
-  throw new Error('Invalid email or password');
-};
+import { authService } from '../api/authService';
+import { isAuthApiEnabled } from '../config/appConfig';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -86,9 +67,15 @@ const LoginPage = () => {
     dispatch(loginStart());
 
     try {
-      const response = await mockLogin(formData.email, formData.password);
-      dispatch(loginSuccess({ user: response.user, accessToken: response.accessToken }));
-      localStorage.setItem('refreshToken', response.refreshToken);
+      const response = await authService.login({
+        email: formData.email,
+        password: formData.password,
+      });
+      dispatch(loginSuccess({
+        user: response.user,
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+      }));
       navigate('/dashboard');
     } catch (err) {
       dispatch(loginFailure(err instanceof Error ? err.message : 'Login failed'));
@@ -127,13 +114,15 @@ const LoginPage = () => {
           </Alert>
         )}
 
-        <Box sx={{ mb: 2, p: 2, bgcolor: 'info.light', borderRadius: 2, opacity: 0.9 }}>
-          <Typography variant="body2" color="info.contrastText">
-            <strong>Demo credentials:</strong><br />
-            Email: demo@example.com<br />
-            Password: password
-          </Typography>
-        </Box>
+        {!isAuthApiEnabled && (
+          <Box sx={{ mb: 2, p: 2, bgcolor: 'info.light', borderRadius: 2, opacity: 0.9 }}>
+            <Typography variant="body2" color="info.contrastText">
+              <strong>Demo credentials:</strong><br />
+              Email: demo@example.com<br />
+              Password: password
+            </Typography>
+          </Box>
+        )}
 
         <form onSubmit={handleSubmit}>
           <TextField

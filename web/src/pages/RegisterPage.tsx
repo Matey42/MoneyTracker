@@ -21,33 +21,7 @@ import {
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../hooks/useAppStore';
 import { loginSuccess, loginFailure, loginStart, clearError } from '../features/auth/authSlice';
-
-// Mock register for development
-const mockRegister = async (data: {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-}) => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  if (data.email === 'existing@example.com') {
-    throw new Error('Email already exists');
-  }
-
-  return {
-    user: {
-      id: '1',
-      email: data.email,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-    },
-    accessToken: 'mock-access-token',
-    refreshToken: 'mock-refresh-token',
-  };
-};
+import { authService } from '../api/authService';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -112,14 +86,17 @@ const RegisterPage = () => {
     dispatch(loginStart());
 
     try {
-      const response = await mockRegister({
+      const response = await authService.register({
         email: formData.email,
         password: formData.password,
         firstName: formData.firstName,
         lastName: formData.lastName,
       });
-      dispatch(loginSuccess({ user: response.user, accessToken: response.accessToken }));
-      localStorage.setItem('refreshToken', response.refreshToken);
+      dispatch(loginSuccess({
+        user: response.user,
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+      }));
       navigate('/dashboard');
     } catch (err) {
       dispatch(loginFailure(err instanceof Error ? err.message : 'Registration failed'));
