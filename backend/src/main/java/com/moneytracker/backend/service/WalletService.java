@@ -1,0 +1,162 @@
+package com.moneytracker.backend.service;
+
+import com.moneytracker.backend.dto.CreateWalletRequest;
+import com.moneytracker.backend.dto.UpdateWalletRequest;
+import com.moneytracker.backend.dto.WalletResponse;
+import com.moneytracker.backend.entity.*;
+import com.moneytracker.backend.exception.ResourceNotFoundException;
+import com.moneytracker.backend.repository.TransactionRepository;
+import com.moneytracker.backend.repository.WalletMemberRepository;
+import com.moneytracker.backend.repository.WalletRepository;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+@Transactional
+public class WalletService {
+
+    private final WalletRepository walletRepository;
+    private final WalletMemberRepository walletMemberRepository;
+    private final TransactionRepository transactionRepository;
+
+    public WalletService(WalletRepository walletRepository,
+                         WalletMemberRepository walletMemberRepository,
+                         TransactionRepository transactionRepository) {
+        this.walletRepository = walletRepository;
+        this.walletMemberRepository = walletMemberRepository;
+        this.transactionRepository = transactionRepository;
+    }
+
+    public List<WalletResponse> getAllWalletsForUser(User user) {
+        List<Wallet> wallets = walletRepository.findAllAccessibleByUser(user.getId());
+        return wallets.stream()
+                .map(wallet -> toResponse(wallet, user))
+                .toList();
+    }
+
+    public List<WalletResponse> getFavoriteWallets(User user) {
+        List<Wallet> wallets = walletRepository.findFavorites(user.getId());
+        return wallets.stream()
+                .map(wallet -> toResponse(wallet, user))
+                .toList();
+    }
+
+    public WalletResponse getWalletById(UUID walletId, User user) {
+        Wallet wallet = walletRepository.findById(walletId)
+                .orElseThrow(() -> new ResourceNotFoundException("Wallet not found"));
+
+        if (!hasAccess(wallet, user)) {
+            throw new AccessDeniedException("You don't have access to this wallet");
+        }
+
+        return toResponse(wallet, user);
+    }
+
+    public WalletResponse createWallet(CreateWalletRequest request, User user) {
+        Wallet wallet = new Wallet();
+        wallet.setOwner(user);
+        wallet.setName(request.name());
+        wallet.setType(request.type());
+        wallet.setCurrency(request.currency() != null ? request.currency() : "USD");
+        wallet.setDescription(request.description());
+        wallet.setIcon(request.icon());
+        wallet.setColor(request.color());
+        wallet.setIsShared(false);
+        wallet.setIsFavorite(false);
+
+        wallet = walletRepository.save(wallet);
+
+        // Add owner as a member with OWNER role
+        WalletMember ownerMember = new WalletMember();
+        ownerMember.setWallet(wallet);
+        ownerMember.setUser(user);
+        ownerMember.setRole(MemberRole.OWNER);
+        walletMemberRepository.save(ownerMember);
+
+        return toResponse(wallet, user);
+    }
+
+    public WalletResponse updateWallet(UUID walletId, UpdateWalletRequest request, User user) {
+        Wallet wallet = walletRepository.findById(walletId)
+                .orElseThrow(() -> new ResourceNotFoundException("Wallet not found"));
+
+        if (!isOwner(wallet, user)) {
+            throw new AccessDeniedException("Only the owner can update this wallet");
+        }
+
+        if (request.name() != null) {
+            wallet.setName(request.name());
+        }
+        if (request.type() != null) {
+            wallet.setType(request.type());
+        }
+        if (request.currency() != null) {
+            wallet.setCurrency(request.currency());
+        }
+        if (request.description() != null) {
+            wallet.setDescription(request.description());
+        }
+        if (request.icon() != null) {
+            wallet.setIcon(request.icon());
+        }
+        if (request.color() != null) {
+            wallet.setColor(request.color());
+        }
+        if (request.isFavorite() != null) {
+            wallet.setIsFavorite(request.isFavorite());
+        }
+        if (request.favoriteOrder() != null) {
+            wallet.setFavoriteOrder(request.favoriteOrder());
+        }
+
+        wallet = walletRepository.save(wallet);
+        return toResponse(wallet, user);
+    }
+
+    public void deleteWallet(UUID walletId, User user) {
+        Wallet wallet = walletRepository.findById(walletId)
+                .orElseThrow(() -> new ResourceNotFoundException("Wallet not found"));
+
+        if (!isOwner(wallet, user)) {
+            throw new AccessDeniedException("Only the owner can delete this wallet");
+        }
+
+        walletRepository.delete(wallet);
+    }
+
+    private WalletResponse toResponse(Wallet wallet, User user) {
+        BigDecimal balance = transactionRepository.calculateBalance(wallet.getId());
+        BigDecimal dailyChange = calculateDailyChange(wallet.getId());
+        boolean isOwner = isOwner(wallet, user);
+
+        return WalletResponse.from(wallet, balance, dailyChange, isOwner);
+    }
+
+    private BigDecimal calculateDailyChange(UUID walletId) {
+        LocalDate today = LocalDate.now();
+        BigDecimal todayIncome = transactionRepository.sumByWalletAndTypeAndDateBetween(
+                walletId, TransactionType.INCOME, today, today);
+        BigDecimal todayExpense = transactionRepository.sumByWalletAndTypeAndDateBetween(
+                walletId, TransactionType.EXPENSE, today, today);
+
+        BigDecimal income = todayIncome != null ? todayIncome : BigDecimal.ZERO;
+        BigDecimal expense = todayExpense != null ? todayExpense : BigDecimal.ZERO;
+
+        return income.subtract(expense);
+    }
+
+    private boolean hasAccess(Wallet wallet, User user) {
+        return wallet.getOwner().getId().equals(user.getId()) ||
+               walletMemberRepository.existsByWalletIdAndUserId(wallet.getId(), user.getId());
+    }
+
+    private boolean isOwner(Wallet wallet, User user) {
+        return wallet.getOwner().getId().equals(user.getId());
+    }
+}
