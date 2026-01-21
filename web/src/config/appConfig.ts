@@ -9,32 +9,21 @@ const normalizeMode = (value: string | undefined): ApiMode => {
   return 'mock';
 };
 
-const normalizeSource = (value: string | undefined): DataSource | null => {
+const apiMode = normalizeMode(import.meta.env.VITE_API_MODE);
+
+const requireSource = (value: string | undefined, label: string): DataSource => {
   if (value === 'api' || value === 'mock') {
     return value;
   }
-  return null;
+  throw new Error(`${label} must be set to "api" or "mock".`);
 };
-
-const apiMode = normalizeMode(import.meta.env.VITE_API_MODE);
-
-const defaultMatrix: Record<ApiMode, { auth: DataSource; wallets: DataSource; transactions: DataSource }> = {
-  mock: { auth: 'mock', wallets: 'mock', transactions: 'mock' },
-  api: { auth: 'api', wallets: 'api', transactions: 'api' },
-  hybrid: { auth: 'api', wallets: 'mock', transactions: 'mock' },
-};
-
-const walletsOverride = normalizeSource(import.meta.env.VITE_WALLETS_SOURCE);
-const transactionsOverride = normalizeSource(import.meta.env.VITE_TRANSACTIONS_SOURCE);
-
-const modeDefaults = defaultMatrix[apiMode];
 
 export const apiConfig = {
   mode: apiMode,
   baseUrl: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080',
-  authSource: modeDefaults.auth,
-  walletsSource: walletsOverride ?? modeDefaults.wallets,
-  transactionsSource: transactionsOverride ?? modeDefaults.transactions,
+  authSource: requireSource(import.meta.env.VITE_AUTH_SOURCE, 'VITE_AUTH_SOURCE'),
+  walletsSource: requireSource(import.meta.env.VITE_WALLETS_SOURCE, 'VITE_WALLETS_SOURCE'),
+  transactionsSource: requireSource(import.meta.env.VITE_TRANSACTIONS_SOURCE, 'VITE_TRANSACTIONS_SOURCE'),
 };
 
 export const isAuthApiEnabled = apiConfig.authSource === 'api';
