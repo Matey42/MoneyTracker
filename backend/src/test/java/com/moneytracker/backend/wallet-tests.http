@@ -1,0 +1,54 @@
+@baseUrl = http://localhost:8080/api
+
+### Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "Password123"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+%}
+
+### Create wallet
+# @name createWallet
+POST {{baseUrl}}/wallets
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Primary Wallet",
+  "type": "BANK_CASH",
+  "currency": "PLN",
+  "description": "Main account",
+  "icon": "bank",
+  "color": "#123456"
+}
+
+> {%
+    client.global.set("walletId", response.body.id);
+%}
+
+### Get all wallets
+GET {{baseUrl}}/wallets
+Authorization: Bearer {{accessToken}}
+
+### Update wallet
+PUT {{baseUrl}}/wallets/{{walletId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Primary Wallet Updated",
+  "currency": "EUR",
+  "isFavorite": true,
+  "favoriteOrder": 1
+}
+
+### Delete wallet
+DELETE {{baseUrl}}/wallets/{{walletId}}
+Authorization: Bearer {{accessToken}}

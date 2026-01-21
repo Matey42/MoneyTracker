@@ -1,0 +1,31 @@
+@baseUrl = http://localhost:8080/api
+
+### Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "Password123"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+%}
+
+### Get all categories
+GET {{baseUrl}}/categories
+Authorization: Bearer {{accessToken}}
+
+### Get income categories
+GET {{baseUrl}}/categories/income
+Authorization: Bearer {{accessToken}}
+
+### Get expense categories
+GET {{baseUrl}}/categories/expense
+Authorization: Bearer {{accessToken}}
+
+### Get system categories
+GET {{baseUrl}}/categories/system
+Authorization: Bearer {{accessToken}}

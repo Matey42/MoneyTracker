@@ -1,0 +1,77 @@
+@baseUrl = http://localhost:8080/api
+
+### Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "Password123"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+%}
+
+### Create wallet (for transactions)
+# @name createWallet
+POST {{baseUrl}}/wallets
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Transactions Wallet",
+  "type": "BANK_CASH",
+  "currency": "PLN"
+}
+
+> {%
+    client.global.set("walletId", response.body.id);
+%}
+
+### Get system categories
+# @name systemCategories
+GET {{baseUrl}}/categories/system
+Authorization: Bearer {{accessToken}}
+
+> {%
+    if (response.body && response.body.length > 0) {
+        client.global.set("categoryId", response.body[0].id);
+    }
+%}
+
+### Create transaction
+# @name createTransaction
+POST {{baseUrl}}/transactions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "walletId": "{{walletId}}",
+  "type": "EXPENSE",
+  "amount": 45.50,
+  "categoryId": "{{categoryId}}",
+  "description": "Lunch",
+  "transactionDate": "2024-02-01"
+}
+
+> {%
+    client.global.set("transactionId", response.body.id);
+%}
+
+### Get all transactions
+GET {{baseUrl}}/transactions
+Authorization: Bearer {{accessToken}}
+
+### Get wallet transactions
+GET {{baseUrl}}/transactions/wallet/{{walletId}}
+Authorization: Bearer {{accessToken}}
+
+### Get wallet balance
+GET {{baseUrl}}/transactions/wallet/{{walletId}}/balance
+Authorization: Bearer {{accessToken}}
+
+### Delete transaction
+DELETE {{baseUrl}}/transactions/{{transactionId}}
+Authorization: Bearer {{accessToken}}
