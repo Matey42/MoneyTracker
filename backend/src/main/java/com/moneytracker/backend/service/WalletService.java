@@ -41,7 +41,7 @@ public class WalletService {
     }
 
     public List<WalletResponse> getFavoriteWallets(User user) {
-        List<Wallet> wallets = walletRepository.findFavorites(user.getId());
+        List<Wallet> wallets = walletRepository.findFavoritesByUserId(user.getId());
         return wallets.stream()
                 .map(wallet -> toResponse(wallet, user))
                 .toList();
@@ -67,7 +67,6 @@ public class WalletService {
         wallet.setDescription(request.description());
         wallet.setIcon(request.icon());
         wallet.setColor(request.color());
-        wallet.setIsShared(false);
         wallet.setIsFavorite(false);
 
         wallet = walletRepository.save(wallet);
