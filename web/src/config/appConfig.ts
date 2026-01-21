@@ -20,7 +20,7 @@ const requireSource = (value: string | undefined, label: string): DataSource => 
 
 export const apiConfig = {
   mode: apiMode,
-  baseUrl: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080',
+  baseUrl: import.meta.env.VITE_API_BASE_URL ?? '/api',
   authSource: requireSource(import.meta.env.VITE_AUTH_SOURCE, 'VITE_AUTH_SOURCE'),
   walletsSource: requireSource(import.meta.env.VITE_WALLETS_SOURCE, 'VITE_WALLETS_SOURCE'),
   transactionsSource: requireSource(import.meta.env.VITE_TRANSACTIONS_SOURCE, 'VITE_TRANSACTIONS_SOURCE'),
