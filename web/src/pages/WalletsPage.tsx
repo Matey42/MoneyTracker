@@ -57,6 +57,7 @@ import { fetchWalletsFailure, fetchWalletsStart, fetchWalletsSuccess } from '../
 import type { Wallet, WalletCategory } from '../types';
 import { formatCurrency, getRelativeTime } from '../utils/formatters';
 import { getWalletColor } from '../utils/walletConfig';
+import { getWalletIconEmoji, walletIconOptions } from '../utils/walletIcons';
 import { walletsService } from '../api/wallets';
 
 const walletTypes: { value: WalletCategory; label: string }[] = [
@@ -77,22 +78,6 @@ const currencies = [
   { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
   { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
   { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
-];
-
-// Wallet icon options
-const walletIcons = [
-  { id: 'wallet', label: 'Wallet', icon: '💰' },
-  { id: 'bank', label: 'Bank', icon: '🏦' },
-  { id: 'piggy', label: 'Piggy Bank', icon: '🐷' },
-  { id: 'safe', label: 'Safe', icon: '🔐' },
-  { id: 'credit', label: 'Credit Card', icon: '💳' },
-  { id: 'cash', label: 'Cash', icon: '💵' },
-  { id: 'coins', label: 'Coins', icon: '🪙' },
-  { id: 'chart', label: 'Chart', icon: '📈' },
-  { id: 'bitcoin', label: 'Bitcoin', icon: '₿' },
-  { id: 'house', label: 'House', icon: '🏠' },
-  { id: 'building', label: 'Building', icon: '🏢' },
-  { id: 'briefcase', label: 'Briefcase', icon: '💼' },
 ];
 
 // Mock net worth history data - more detailed
@@ -923,7 +908,7 @@ const WalletsPage = () => {
                         {group.favorites
                           .sort((a, b) => (a.favoriteOrder ?? 0) - (b.favoriteOrder ?? 0))
                           .map((wallet) => {
-                            const walletIconEmoji = walletIcons.find(i => i.id === wallet.icon)?.icon || '💰';
+                            const walletIconEmoji = getWalletIconEmoji(wallet.icon);
                             return (
                               <Chip
                                 key={wallet.id}
@@ -1068,7 +1053,7 @@ const WalletsPage = () => {
             Icon
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-            {walletIcons.map((iconOption) => (
+            {walletIconOptions.map((iconOption) => (
               <Box
                 key={iconOption.id}
                 onClick={() => setNewWallet({ ...newWallet, icon: iconOption.id })}
@@ -1193,7 +1178,7 @@ const WalletsPage = () => {
                   </Typography>
                   <List dense disablePadding>
                     {favorites.map((wallet) => {
-                      const walletIconEmoji = walletIcons.find(i => i.id === wallet.icon)?.icon || '💰';
+                      const walletIconEmoji = getWalletIconEmoji(wallet.icon);
                       const isDragging = draggedFavoriteId === wallet.id;
                       return (
                         <ListItem
@@ -1256,7 +1241,7 @@ const WalletsPage = () => {
                   </Typography>
                   <List dense disablePadding>
                     {nonFavorites.map((wallet) => {
-                      const walletIconEmoji = walletIcons.find(i => i.id === wallet.icon)?.icon || '💰';
+                      const walletIconEmoji = getWalletIconEmoji(wallet.icon);
                       return (
                         <ListItem key={wallet.id} disablePadding sx={{ mb: 0.5 }}>
                           <ListItemButton 

@@ -37,11 +37,11 @@ import {
   TrendingDown as ExpenseIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  AccountBalanceWallet as WalletIcon,
 } from '@mui/icons-material';
 import type { Wallet, Transaction, TransactionType, Category } from '../types';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { getWalletLabel, getWalletColor } from '../utils/walletConfig';
+import { getWalletIconEmoji } from '../utils/walletIcons';
 import { walletsService } from '../api/wallets';
 import { transactionsService } from '../api/transactions';
 import { categoriesService } from '../api/categories';
@@ -176,7 +176,9 @@ const WalletDetailPage = () => {
         <CardContent sx={{ p: 4, color: 'white' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
             <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)', width: 56, height: 56 }}>
-              <WalletIcon sx={{ fontSize: 32 }} />
+              <Box component="span" sx={{ fontSize: 28, lineHeight: 1 }}>
+                {getWalletIconEmoji(wallet.icon)}
+              </Box>
             </Avatar>
             <Box sx={{ flex: 1 }}>
               <Typography variant="h4" fontWeight={700}>
@@ -255,7 +257,9 @@ const WalletDetailPage = () => {
           <Card>
             <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Avatar sx={{ bgcolor: 'primary.light' }}>
-                <WalletIcon sx={{ color: 'primary.main' }} />
+                <Box component="span" sx={{ fontSize: 20, lineHeight: 1, color: 'primary.main' }}>
+                  {getWalletIconEmoji(wallet.icon)}
+                </Box>
               </Avatar>
               <Box>
                 <Typography variant="body2" color="text.secondary">
