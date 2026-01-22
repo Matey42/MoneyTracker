@@ -20,12 +20,20 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
     <Box
       sx={{
         minHeight: '100vh',
+        height: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         background: isDarkMode 
           ? 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%)'
           : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        boxSizing: 'border-box',
+        overflowY: 'auto',
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+        '&::-webkit-scrollbar': {
+          display: 'none',
+        },
         py: 4,
       }}
     >
