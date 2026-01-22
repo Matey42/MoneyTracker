@@ -11,7 +11,6 @@ public record UpdateWalletRequest(
         String currency,
         String description,
         String icon,
-        String color,
         Boolean isFavorite,
         Integer favoriteOrder
 ) {}

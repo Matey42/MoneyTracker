@@ -30,7 +30,6 @@ export interface Wallet {
   // Optional fields
   description?: string;
   icon?: string;
-  color?: string;
   isFavorite?: boolean;
   favoriteOrder?: number;
   createdAt: string;
@@ -46,7 +45,6 @@ export interface CreateWalletRequest {
   isShared?: boolean; // default false
   description?: string;
   icon?: string;
-  color?: string;
 }
 
 // Member types

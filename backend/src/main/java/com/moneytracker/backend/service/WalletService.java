@@ -66,7 +66,6 @@ public class WalletService {
         wallet.setCurrency(request.currency() != null ? request.currency() : "USD");
         wallet.setDescription(request.description());
         wallet.setIcon(request.icon());
-        wallet.setColor(request.color());
         wallet.setIsFavorite(false);
 
         wallet = walletRepository.save(wallet);
@@ -103,9 +102,6 @@ public class WalletService {
         }
         if (request.icon() != null) {
             wallet.setIcon(request.icon());
-        }
-        if (request.color() != null) {
-            wallet.setColor(request.color());
         }
         if (request.isFavorite() != null) {
             wallet.setIsFavorite(request.isFavorite());

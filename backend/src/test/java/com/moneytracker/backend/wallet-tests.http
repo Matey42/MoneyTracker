@@ -25,8 +25,7 @@ Content-Type: application/json
   "type": "BANK_CASH",
   "currency": "PLN",
   "description": "Main account",
-  "icon": "bank",
-  "color": "#123456"
+  "icon": "bank"
 }
 
 > {%

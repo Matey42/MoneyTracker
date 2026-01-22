@@ -38,7 +38,6 @@ export const walletsService = {
         createdAt: new Date().toISOString(),
         description: payload.description,
         icon: payload.icon,
-        color: payload.color,
         isFavorite: false,
       };
     }

@@ -15,6 +15,5 @@ public record CreateWalletRequest(
 
         String currency,
         String description,
-        String icon,
-        String color
+        String icon
 ) {}

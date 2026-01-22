@@ -79,8 +79,7 @@ class WalletControllerTest {
                 WalletType.BANK_CASH,
                 "PLN",
                 "Main account",
-                "bank",
-                "#123456"
+                "bank"
         );
         WalletResponse response = sampleWalletResponse();
         when(walletService.createWallet(any(CreateWalletRequest.class), eq(user))).thenReturn(response);
@@ -123,7 +122,6 @@ class WalletControllerTest {
                 true,
                 "Main account",
                 "bank",
-                "#123456",
                 true,
                 0,
                 Instant.parse("2024-01-01T00:00:00Z")

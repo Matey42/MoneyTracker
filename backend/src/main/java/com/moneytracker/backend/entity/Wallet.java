@@ -44,9 +44,6 @@ public class Wallet {
     @Column(length = 50)
     private String icon;
 
-    @Column(length = 20)
-    private String color;
-
     @Column(name = "is_favorite")
     @Builder.Default
     private Boolean isFavorite = false;

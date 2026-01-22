@@ -19,7 +19,6 @@ public record WalletResponse(
         boolean isOwner,
         String description,
         String icon,
-        String color,
         boolean isFavorite,
         Integer favoriteOrder,
         Instant createdAt
@@ -37,7 +36,6 @@ public record WalletResponse(
                 isOwner,
                 wallet.getDescription(),
                 wallet.getIcon(),
-                wallet.getColor(),
                 wallet.getIsFavorite() != null && wallet.getIsFavorite(),
                 wallet.getFavoriteOrder(),
                 wallet.getCreatedAt()
