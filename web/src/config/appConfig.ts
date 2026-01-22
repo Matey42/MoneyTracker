@@ -26,6 +26,7 @@ export const apiConfig = {
   transactionsSource: requireSource(import.meta.env.VITE_TRANSACTIONS_SOURCE, 'VITE_TRANSACTIONS_SOURCE'),
 };
 
+export const isDevMode = import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === 'true';
 export const isAuthApiEnabled = apiConfig.authSource === 'api';
 export const isWalletsApiEnabled = apiConfig.walletsSource === 'api';
 export const isTransactionsApiEnabled = apiConfig.transactionsSource === 'api';

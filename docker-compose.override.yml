@@ -13,6 +13,10 @@ services:
       - "8080:8080"  # Expose for direct API testing
 
   frontend:
+    build:
+      context: ./web
+      args:
+        VITE_DEV_MODE: "true"  # Enable demo mode UI
     ports:
       - "3000:80"  # Also expose on 3000 for convenience
 

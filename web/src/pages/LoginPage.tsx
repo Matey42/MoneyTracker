@@ -21,7 +21,10 @@ import {
 import { useAppDispatch, useAppSelector } from '../hooks/useAppStore';
 import { loginSuccess, loginFailure, loginStart, clearError } from '../features/auth/authSlice';
 import { authService } from '../api/authService';
-import { isAuthApiEnabled } from '../config/appConfig';
+import { isDevMode } from '../config/appConfig';
+
+const DEMO_EMAIL = 'demo@example.com';
+const DEMO_PASSWORD = 'password';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -29,8 +32,8 @@ const LoginPage = () => {
   const { isLoading, error } = useAppSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: isDevMode ? DEMO_EMAIL : '',
+    password: isDevMode ? DEMO_PASSWORD : '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -114,12 +117,12 @@ const LoginPage = () => {
           </Alert>
         )}
 
-        {!isAuthApiEnabled && (
+        {isDevMode && (
           <Box sx={{ mb: 2, p: 2, bgcolor: 'info.light', borderRadius: 2, opacity: 0.9 }}>
             <Typography variant="body2" color="info.contrastText">
               <strong>Demo credentials:</strong><br />
-              Email: demo@example.com<br />
-              Password: password
+              Email: {DEMO_EMAIL}<br />
+              Password: {DEMO_PASSWORD}
             </Typography>
           </Box>
         )}
