@@ -12,16 +12,18 @@ import {
   InputAdornment,
   IconButton,
   CircularProgress,
+  useTheme,
 } from '@mui/material';
 import {
   Visibility,
   VisibilityOff,
-  AccountBalanceWallet as WalletIcon,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../hooks/useAppStore';
 import { loginSuccess, loginFailure, loginStart, clearError } from '../features/auth/authSlice';
 import { authService } from '../api/authService';
 import { isDevMode } from '../config/appConfig';
+import logoLight from '../assets/mt_light.png';
+import logoDark from '../assets/mt_dark.png';
 
 const DEMO_EMAIL = 'demo@example.com';
 const DEMO_PASSWORD = 'password';
@@ -30,6 +32,8 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isLoading, error } = useAppSelector((state) => state.auth);
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
 
   const [formData, setFormData] = useState({
     email: isDevMode ? DEMO_EMAIL : '',
@@ -88,20 +92,32 @@ const LoginPage = () => {
   return (
     <Card sx={{ borderRadius: 4, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
       <CardContent sx={{ p: 4 }}>
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Box sx={{ textAlign: 'center', mb: 2 }}>
           <Box
             sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 64,
-              height: 64,
-              borderRadius: '50%',
-              backgroundColor: 'primary.main',
-              mb: 2,
+              height: 120,
+              width: '100%',
+              overflow: 'hidden',
+              mb: -1,
+              pointerEvents: 'none',
+              userSelect: 'none',
+              caretColor: 'transparent',
             }}
           >
-            <WalletIcon sx={{ fontSize: 32, color: 'white' }} />
+            <Box
+              component="img"
+              src={isDarkMode ? logoDark : logoLight}
+              alt="MoneyTracker logo"
+              draggable={false}
+              sx={{
+                height: '100%',
+                width: '100%',
+                objectFit: 'contain',
+                transform: 'scale(1.6)',
+                pointerEvents: 'none',
+                userSelect: 'none',
+              }}
+            />
           </Box>
           <Typography variant="h4" fontWeight={700} gutterBottom>
             Welcome back
