@@ -29,7 +29,9 @@ import {
   InputAdornment,
   Skeleton,
   Divider,
+  useTheme,
 } from '@mui/material';
+import { alpha, darken, lighten } from '@mui/material/styles';
 import {
   ArrowBack as BackIcon,
   Add as AddIcon,
@@ -54,6 +56,7 @@ const getCategoryColor = (categories: Category[], id?: string) => getCategoryByI
 const WalletDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const theme = useTheme();
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -160,6 +163,18 @@ const WalletDetailPage = () => {
     );
   }
 
+  const headerBaseColor = getWalletColor(wallet.type);
+  const headerTextColor = theme.palette.getContrastText(headerBaseColor);
+  const headerAccentBg = alpha(headerTextColor, 0.2);
+  const headerGradientStart = theme.palette.mode === 'dark'
+    ? lighten(headerBaseColor, 0.08)
+    : lighten(headerBaseColor, 0.2);
+  const headerGradientEnd = theme.palette.mode === 'dark'
+    ? darken(headerBaseColor, 0.35)
+    : darken(headerBaseColor, 0.12);
+  const headerHighlight = alpha('#ffffff', theme.palette.mode === 'dark' ? 0.12 : 0.25);
+  const headerSpotlight = alpha('#ffffff', theme.palette.mode === 'dark' ? 0.08 : 0.18);
+
   return (
     <Box>
       {/* Back Button */}
@@ -172,10 +187,45 @@ const WalletDetailPage = () => {
       </Button>
 
       {/* Wallet Header Card */}
-      <Card sx={{ mb: 4, background: `linear-gradient(135deg, ${getWalletColor(wallet.type)} 0%, ${getWalletColor(wallet.type)}99 100%)` }}>
-        <CardContent sx={{ p: 4, color: 'white' }}>
+      <Card
+        sx={{
+          mb: 4,
+          color: headerTextColor,
+          backgroundColor: headerBaseColor,
+          backgroundImage: `linear-gradient(135deg, ${headerGradientStart} 0%, ${headerGradientEnd} 100%)`,
+          boxShadow: `0 22px 44px -26px ${alpha(headerBaseColor, 0.7)}`,
+          border: `1px solid ${alpha(headerTextColor, 0.12)}`,
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `
+              radial-gradient(circle at 15% 20%, ${headerHighlight} 0%, transparent 45%),
+              radial-gradient(circle at 85% 10%, ${headerSpotlight} 0%, transparent 38%)
+            `,
+            pointerEvents: 'none',
+          },
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `linear-gradient(120deg, ${alpha('#ffffff', theme.palette.mode === 'dark' ? 0.06 : 0.16)} 0%, transparent 55%)`,
+            pointerEvents: 'none',
+          },
+        }}
+      >
+        <CardContent sx={{ p: 4, color: headerTextColor }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-            <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)', width: 56, height: 56 }}>
+            <Avatar
+              sx={{
+                bgcolor: alpha('#ffffff', theme.palette.mode === 'dark' ? 0.18 : 0.35),
+                border: `1px solid ${alpha('#ffffff', theme.palette.mode === 'dark' ? 0.25 : 0.4)}`,
+                width: 56,
+                height: 56,
+              }}
+            >
               <Box component="span" sx={{ fontSize: 28, lineHeight: 1 }}>
                 {getWalletIconEmoji(wallet.icon)}
               </Box>
@@ -188,16 +238,16 @@ const WalletDetailPage = () => {
                 <Chip
                   label={getWalletLabel(wallet.type)}
                   size="small"
-                  sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                  sx={{ bgcolor: headerAccentBg, color: headerTextColor }}
                 />
                 <Chip
                   label={wallet.currency}
                   size="small"
-                  sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                  sx={{ bgcolor: headerAccentBg, color: headerTextColor }}
                 />
               </Box>
             </Box>
-            <IconButton sx={{ color: 'white' }}>
+            <IconButton sx={{ color: headerTextColor }}>
               <EditIcon />
             </IconButton>
           </Box>
