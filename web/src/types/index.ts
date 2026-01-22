@@ -116,6 +116,8 @@ export interface CreateTransactionRequest {
   
   // Only for Transfers
   targetWalletId?: string;
+
+  transactionDate?: string;
 }
 
 // Liability types
