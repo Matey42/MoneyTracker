@@ -314,6 +314,19 @@ const WalletsPage = () => {
     return groups;
   }, [wallets]);
 
+  const orderedWalletTypes = useMemo(() => {
+    return [...walletTypes].sort((a, b) => {
+      const aHasWallets = walletGroups[a.value].items.length > 0;
+      const bHasWallets = walletGroups[b.value].items.length > 0;
+
+      if (aHasWallets === bHasWallets) {
+        return 0;
+      }
+
+      return aHasWallets ? -1 : 1;
+    });
+  }, [walletGroups]);
+
   // Asset allocation data for donut chart
   const assetAllocation = useMemo(() => {
     return walletTypes
@@ -780,7 +793,7 @@ const WalletsPage = () => {
 
       {/* Category Cards */}
       <Stack spacing={1.5}>
-        {walletTypes.map((type) => {
+        {orderedWalletTypes.map((type) => {
           const group = walletGroups[type.value];
           const hasWallets = group.items.length > 0;
           const color = getWalletColor(type.value);
@@ -806,7 +819,17 @@ const WalletsPage = () => {
               }}
             >
               <CardActionArea
+                component="div"
+                role={hasWallets ? 'button' : undefined}
+                tabIndex={hasWallets ? 0 : -1}
                 onClick={() => hasWallets && navigate(`/wallets/${categorySlug[type.value]}`)}
+                onKeyDown={(event) => {
+                  if (!hasWallets) return;
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    navigate(`/wallets/${categorySlug[type.value]}`);
+                  }
+                }}
                 disabled={!hasWallets}
               >
                 <CardContent sx={{ p: 2 }}>
