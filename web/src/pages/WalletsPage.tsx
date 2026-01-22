@@ -181,20 +181,14 @@ const WalletsPage = () => {
     fetchWallets();
   }, [dispatch]);
 
-  const handleCreateWallet = () => {
-    const wallet: Wallet = {
-      id: String(Date.now()),
+  const handleCreateWallet = async () => {
+    const wallet = await walletsService.createWallet({
       name: newWallet.name,
       type: newWallet.type,
       currency: newWallet.currency,
-      balance: 0,
-      isOwner: true,
-      isShared: false,
-      isFavorite: false,
-      createdAt: new Date().toISOString(),
       description: newWallet.description,
       icon: newWallet.icon,
-    };
+    });
     const updated = [...wallets, wallet];
     setWallets(updated);
     dispatch(fetchWalletsSuccess(updated)); // Update Redux store

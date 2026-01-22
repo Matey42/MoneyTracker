@@ -39,23 +39,24 @@ import {
   Delete as DeleteIcon,
   AccountBalanceWallet as WalletIcon,
 } from '@mui/icons-material';
-import type { Wallet, Transaction, TransactionType } from '../types';
+import type { Wallet, Transaction, TransactionType, Category } from '../types';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { getWalletLabel, getWalletColor } from '../utils/walletConfig';
 import { walletsService } from '../api/wallets';
 import { transactionsService } from '../api/transactions';
-import { mockCategories } from '../api/mocks/transactions';
+import { categoriesService } from '../api/categories';
 
 // Category lookup helpers
-const getCategoryById = (id?: string) => mockCategories.find((c) => c.id === id);
-const getCategoryName = (id?: string) => getCategoryById(id)?.name || 'Uncategorized';
-const getCategoryColor = (id?: string) => getCategoryById(id)?.color || '#9E9E9E';
+const getCategoryById = (categories: Category[], id?: string) => categories.find((c) => c.id === id);
+const getCategoryName = (categories: Category[], id?: string) => getCategoryById(categories, id)?.name || 'Uncategorized';
+const getCategoryColor = (categories: Category[], id?: string) => getCategoryById(categories, id)?.color || '#9E9E9E';
 
 const WalletDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -72,13 +73,18 @@ const WalletDetailPage = () => {
     const fetchData = async () => {
       try {
         await new Promise((resolve) => setTimeout(resolve, 500));
-        const foundWallet = id ? await walletsService.getWallet(id) : null;
+        const [foundWallet, data, categoriesData] = await Promise.all([
+          id ? walletsService.getWallet(id) : Promise.resolve(null),
+          id ? transactionsService.getTransactions(id) : Promise.resolve([]),
+          categoriesService.getCategories(),
+        ]);
         setWallet(foundWallet || null);
-        const data = id ? await transactionsService.getTransactions(id) : [];
         setTransactions(data);
+        setCategories(categoriesData);
       } catch {
         setWallet(null);
         setTransactions([]);
+        setCategories([]);
       } finally {
         setIsLoading(false);
       }
@@ -86,24 +92,22 @@ const WalletDetailPage = () => {
     fetchData();
   }, [id]);
 
-  const handleCreateTransaction = () => {
+  const handleCreateTransaction = async () => {
     if (!wallet) return;
     
     const amount = parseFloat(newTransaction.amount) || 0;
 
-    const transaction: Transaction = {
-      id: String(Date.now()),
+    const transaction = await transactionsService.createTransaction({
       walletId: wallet.id,
-      userId: '1',
       type: newTransaction.type,
       amount,
-      currency: wallet.currency,
+      categoryId: newTransaction.categoryId || undefined,
       description: newTransaction.description,
-      categoryId: newTransaction.categoryId,
       transactionDate: newTransaction.transactionDate,
-    };
+    });
+    const normalized = transaction.currency ? transaction : { ...transaction, currency: wallet.currency };
     
-    setTransactions([transaction, ...transactions]);
+    setTransactions([normalized, ...transactions]);
     
     // Update wallet balance
     const balanceChange = newTransaction.type === 'INCOME' ? amount : -amount;
@@ -119,9 +123,10 @@ const WalletDetailPage = () => {
     });
   };
 
-  const handleDeleteTransaction = (transaction: Transaction) => {
+  const handleDeleteTransaction = async (transaction: Transaction) => {
     if (!wallet) return;
     
+    await transactionsService.deleteTransaction(transaction.id);
     setTransactions(transactions.filter((t) => t.id !== transaction.id));
     
     // Revert wallet balance
@@ -343,18 +348,18 @@ const WalletDetailPage = () => {
                                   {transaction.description || 'No description'}
                                 </Typography>
                                 <Typography variant="caption" color="text.secondary">
-                                  {getCategoryName(transaction.categoryId)}
+                                  {getCategoryName(categories, transaction.categoryId)}
                                 </Typography>
                               </Box>
                             </Box>
                           </TableCell>
                           <TableCell>
                             <Chip
-                              label={getCategoryName(transaction.categoryId)}
+                              label={getCategoryName(categories, transaction.categoryId)}
                               size="small"
                               sx={{
-                                bgcolor: `${getCategoryColor(transaction.categoryId)}20`,
-                                color: getCategoryColor(transaction.categoryId),
+                                bgcolor: `${getCategoryColor(categories, transaction.categoryId)}20`,
+                                color: getCategoryColor(categories, transaction.categoryId),
                                 fontWeight: 600,
                               }}
                             />
@@ -458,7 +463,7 @@ const WalletDetailPage = () => {
                   label="Category"
                   onChange={(e) => setNewTransaction({ ...newTransaction, categoryId: e.target.value })}
                 >
-                  {mockCategories
+                  {categories
                     .filter((c) => c.type === newTransaction.type)
                     .map((cat) => (
                       <MenuItem key={cat.id} value={cat.id}>

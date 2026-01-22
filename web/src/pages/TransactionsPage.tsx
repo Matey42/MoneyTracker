@@ -38,21 +38,22 @@ import {
   Delete as DeleteIcon,
   AccountBalanceWallet as WalletIcon,
 } from '@mui/icons-material';
-import type { Transaction, TransactionType, Wallet } from '../types';
+import type { Transaction, TransactionType, Wallet, Category } from '../types';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { walletsService } from '../api/wallets';
 import { transactionsService } from '../api/transactions';
-import { mockCategories } from '../api/mocks/transactions';
+import { categoriesService } from '../api/categories';
 
 // Category lookup helpers
-const getCategoryById = (id?: string) => mockCategories.find((c) => c.id === id);
-const getCategoryName = (id?: string) => getCategoryById(id)?.name || 'Uncategorized';
-const getCategoryColor = (id?: string) => getCategoryById(id)?.color || '#9E9E9E';
+const getCategoryById = (categories: Category[], id?: string) => categories.find((c) => c.id === id);
+const getCategoryName = (categories: Category[], id?: string) => getCategoryById(categories, id)?.name || 'Uncategorized';
+const getCategoryColor = (categories: Category[], id?: string) => getCategoryById(categories, id)?.color || '#9E9E9E';
 
 const TransactionsPage = () => {
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -74,15 +75,18 @@ const TransactionsPage = () => {
     const fetchTransactions = async () => {
       try {
         await new Promise((resolve) => setTimeout(resolve, 600));
-        const [transactionsData, walletsData] = await Promise.all([
+        const [transactionsData, walletsData, categoriesData] = await Promise.all([
           transactionsService.getTransactions(),
           walletsService.getWallets(),
+          categoriesService.getCategories(),
         ]);
         setTransactions(transactionsData);
         setWallets(walletsData);
+        setCategories(categoriesData);
       } catch {
         setTransactions([]);
         setWallets([]);
+        setCategories([]);
       } finally {
         setIsLoading(false);
       }
@@ -92,7 +96,7 @@ const TransactionsPage = () => {
 
   const filteredTransactions = transactions.filter((t) => {
     const matchesSearch = t.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      getCategoryName(t.categoryId).toLowerCase().includes(searchQuery.toLowerCase());
+      getCategoryName(categories, t.categoryId).toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = typeFilter === 'ALL' || t.type === typeFilter;
     const matchesCategory = categoryFilter === 'ALL' || t.categoryId === categoryFilter;
     const matchesWallet = walletFilter === 'ALL' || t.walletId === walletFilter;
@@ -103,20 +107,18 @@ const TransactionsPage = () => {
     return wallets.find((w) => w.id === walletId)?.name || 'Unknown Wallet';
   };
 
-  const handleCreateTransaction = () => {
+  const handleCreateTransaction = async () => {
     const wallet = wallets.find((w) => w.id === newTransaction.walletId);
-    const transaction: Transaction = {
-      id: String(Date.now()),
+    const transaction = await transactionsService.createTransaction({
       walletId: newTransaction.walletId,
-      userId: '1',
       type: newTransaction.type,
       amount: parseFloat(newTransaction.amount) || 0,
-      currency: wallet?.currency || 'PLN',
+      categoryId: newTransaction.categoryId || undefined,
       description: newTransaction.description,
-      categoryId: newTransaction.categoryId,
       transactionDate: newTransaction.transactionDate,
-    };
-    setTransactions([transaction, ...transactions]);
+    });
+    const normalized = transaction.currency ? transaction : { ...transaction, currency: wallet?.currency || 'PLN' };
+    setTransactions([normalized, ...transactions]);
     setCreateDialogOpen(false);
     setNewTransaction({
       type: 'EXPENSE',
@@ -128,7 +130,8 @@ const TransactionsPage = () => {
     });
   };
 
-  const handleDeleteTransaction = (id: string) => {
+  const handleDeleteTransaction = async (id: string) => {
+    await transactionsService.deleteTransaction(id);
     setTransactions(transactions.filter((t) => t.id !== id));
   };
 
@@ -257,7 +260,7 @@ const TransactionsPage = () => {
                   onChange={(e) => setCategoryFilter(e.target.value)}
                 >
                   <MenuItem value="ALL">All Categories</MenuItem>
-                  {mockCategories.map((cat) => (
+                  {categories.map((cat) => (
                     <MenuItem key={cat.id} value={cat.id}>
                       {cat.name}
                     </MenuItem>
@@ -313,7 +316,7 @@ const TransactionsPage = () => {
                             {transaction.description || 'No description'}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {getCategoryName(transaction.categoryId)}
+                            {getCategoryName(categories, transaction.categoryId)}
                           </Typography>
                         </Box>
                       </Box>
@@ -330,11 +333,11 @@ const TransactionsPage = () => {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={getCategoryName(transaction.categoryId)}
+                        label={getCategoryName(categories, transaction.categoryId)}
                         size="small"
                         sx={{
-                          bgcolor: `${getCategoryColor(transaction.categoryId)}20`,
-                          color: getCategoryColor(transaction.categoryId),
+                          bgcolor: `${getCategoryColor(categories, transaction.categoryId)}20`,
+                          color: getCategoryColor(categories, transaction.categoryId),
                           fontWeight: 600,
                         }}
                       />
@@ -452,7 +455,7 @@ const TransactionsPage = () => {
                   label="Category"
                   onChange={(e) => setNewTransaction({ ...newTransaction, categoryId: e.target.value })}
                 >
-                  {mockCategories
+                  {categories
                     .filter((c) => c.type === newTransaction.type)
                     .map((cat) => (
                       <MenuItem key={cat.id} value={cat.id}>
