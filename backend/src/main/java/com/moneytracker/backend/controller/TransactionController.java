@@ -20,7 +20,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/transactions")
+@RequestMapping
 public class TransactionController {
 
     private final TransactionService transactionService;
@@ -29,7 +29,7 @@ public class TransactionController {
         this.transactionService = transactionService;
     }
 
-    @GetMapping
+    @GetMapping("/transactions")
     public ResponseEntity<Page<TransactionResponse>> getAllTransactions(
             @AuthenticationPrincipal User user,
             @PageableDefault(size = 20, sort = "transactionDate", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -37,7 +37,7 @@ public class TransactionController {
         return ResponseEntity.ok(transactions);
     }
 
-    @GetMapping("/wallet/{walletId}")
+    @GetMapping("/wallets/{walletId}/transactions")
     public ResponseEntity<Page<TransactionResponse>> getWalletTransactions(
             @PathVariable UUID walletId,
             @AuthenticationPrincipal User user,
@@ -46,7 +46,7 @@ public class TransactionController {
         return ResponseEntity.ok(transactions);
     }
 
-    @GetMapping("/wallet/{walletId}/range")
+    @GetMapping("/wallets/{walletId}/transactions/range")
     public ResponseEntity<Page<TransactionResponse>> getWalletTransactionsByDateRange(
             @PathVariable UUID walletId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -58,14 +58,14 @@ public class TransactionController {
         return ResponseEntity.ok(transactions);
     }
 
-    @GetMapping("/wallet/{walletId}/balance")
+    @GetMapping("/wallets/{walletId}/transactions/balance")
     public ResponseEntity<BigDecimal> getWalletBalance(@PathVariable UUID walletId,
                                                         @AuthenticationPrincipal User user) {
         BigDecimal balance = transactionService.getWalletBalance(walletId, user);
         return ResponseEntity.ok(balance);
     }
 
-    @PostMapping
+    @PostMapping("/transactions")
     public ResponseEntity<TransactionResponse> createTransaction(
             @Valid @RequestBody CreateTransactionRequest request,
             @AuthenticationPrincipal User user) {
@@ -73,7 +73,7 @@ public class TransactionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(transaction);
     }
 
-    @DeleteMapping("/{transactionId}")
+    @DeleteMapping("/transactions/{transactionId}")
     public ResponseEntity<Void> deleteTransaction(@PathVariable UUID transactionId,
                                                    @AuthenticationPrincipal User user) {
         transactionService.deleteTransaction(transactionId, user);

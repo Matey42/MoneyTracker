@@ -107,7 +107,7 @@ class TransactionControllerTest {
         UUID walletId = UUID.randomUUID();
         when(transactionService.getWalletBalance(walletId, user)).thenReturn(BigDecimal.valueOf(250));
 
-        mockMvc.perform(get("/transactions/wallet/{walletId}/balance", walletId).with(auth()))
+        mockMvc.perform(get("/wallets/{walletId}/transactions/balance", walletId).with(auth()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").value(250));
 

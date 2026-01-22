@@ -65,11 +65,11 @@ GET {{baseUrl}}/transactions
 Authorization: Bearer {{accessToken}}
 
 ### Get wallet transactions
-GET {{baseUrl}}/transactions/wallet/{{walletId}}
+GET {{baseUrl}}/wallets/{{walletId}}/transactions
 Authorization: Bearer {{accessToken}}
 
 ### Get wallet balance
-GET {{baseUrl}}/transactions/wallet/{{walletId}}/balance
+GET {{baseUrl}}/wallets/{{walletId}}/transactions/balance
 Authorization: Bearer {{accessToken}}
 
 ### Delete transaction
