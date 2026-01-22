@@ -41,7 +41,7 @@ public class DevDataInitializer {
             // Create demo user
             User demoUser = new User();
             demoUser.setEmail("demo@example.com");
-            demoUser.setPassword(passwordEncoder.encode("password"));
+            demoUser.setPasswordHash(passwordEncoder.encode("password"));
             demoUser.setFirstName("Demo");
             demoUser.setLastName("User");
             demoUser = userRepository.save(demoUser);
@@ -62,31 +62,31 @@ public class DevDataInitializer {
 
             // Create wallets
             Wallet personalAccount = createWallet(walletRepository, walletMemberRepository, demoUser,
-                    "Personal Account", WalletType.BANK_CASH, "PLN", "My main checking account", "bank", null, true, 0);
+                    "Personal Account", WalletType.BANK_CASH, "PLN", "My main checking account", "bank", true, 0);
 
             Wallet familyBudget = createWallet(walletRepository, walletMemberRepository, demoUser,
-                    "Family Budget", WalletType.BANK_CASH, "PLN", "Shared family expenses", "wallet", null, true, 1);
+                    "Family Budget", WalletType.BANK_CASH, "PLN", "Shared family expenses", "wallet", true, 1);
 
             Wallet emergencySavings = createWallet(walletRepository, walletMemberRepository, demoUser,
-                    "Emergency Savings", WalletType.BANK_CASH, "PLN", null, "safe", null, false, null);
+                    "Emergency Savings", WalletType.BANK_CASH, "PLN", null, "safe", false, null);
 
             Wallet vacationFund = createWallet(walletRepository, walletMemberRepository, demoUser,
-                    "Vacation Fund", WalletType.BANK_CASH, "PLN", null, "piggy", null, false, null);
+                    "Vacation Fund", WalletType.BANK_CASH, "PLN", null, "piggy", false, null);
 
             Wallet businessAccount = createWallet(walletRepository, walletMemberRepository, demoUser,
-                    "Business Account", WalletType.BANK_CASH, "PLN", null, "briefcase", null, false, null);
+                    "Business Account", WalletType.BANK_CASH, "PLN", null, "briefcase", false, null);
 
             Wallet stockPortfolio = createWallet(walletRepository, walletMemberRepository, demoUser,
-                    "Stock Portfolio", WalletType.INVESTMENTS, "PLN", null, "chart", null, true, 2);
+                    "Stock Portfolio", WalletType.INVESTMENTS, "PLN", null, "chart", true, 2);
 
             Wallet retirementFund = createWallet(walletRepository, walletMemberRepository, demoUser,
-                    "Retirement Fund", WalletType.INVESTMENTS, "PLN", null, "coins", null, false, null);
+                    "Retirement Fund", WalletType.INVESTMENTS, "PLN", null, "coins", false, null);
 
             Wallet bitcoinWallet = createWallet(walletRepository, walletMemberRepository, demoUser,
-                    "Bitcoin Wallet", WalletType.CRYPTO, "PLN", null, "bitcoin", null, true, 3);
+                    "Bitcoin Wallet", WalletType.CRYPTO, "PLN", null, "bitcoin", true, 3);
 
             Wallet ethereumWallet = createWallet(walletRepository, walletMemberRepository, demoUser,
-                    "Ethereum Wallet", WalletType.CRYPTO, "PLN", null, "coins", null, false, null);
+                    "Ethereum Wallet", WalletType.CRYPTO, "PLN", null, "coins", false, null);
 
             log.info("Created {} wallets", 9);
 
@@ -168,7 +168,7 @@ public class DevDataInitializer {
     private Wallet createWallet(WalletRepository walletRepository,
                                 WalletMemberRepository walletMemberRepository,
                                 User owner, String name, WalletType type, String currency,
-                                String description, String icon, String color,
+                                String description, String icon,
                                 boolean isFavorite, Integer favoriteOrder) {
         Wallet wallet = new Wallet();
         wallet.setOwner(owner);
@@ -177,7 +177,6 @@ public class DevDataInitializer {
         wallet.setCurrency(currency);
         wallet.setDescription(description);
         wallet.setIcon(icon);
-        wallet.setColor(color);
         wallet.setIsFavorite(isFavorite);
         wallet.setFavoriteOrder(favoriteOrder);
         wallet = walletRepository.save(wallet);
