@@ -7,7 +7,6 @@ CREATE TABLE wallets (
     currency VARCHAR(10) NOT NULL DEFAULT 'USD',
     description TEXT,
     icon VARCHAR(50),
-    color VARCHAR(20),
     is_favorite BOOLEAN DEFAULT FALSE,
     favorite_order INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

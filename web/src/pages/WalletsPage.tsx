@@ -197,13 +197,35 @@ const WalletsPage = () => {
     setNewWallet({ name: '', type: 'BANK_CASH', description: '', currency: 'PLN', icon: 'wallet' });
   };
 
-  const handleToggleFavorite = (walletId: string, e: React.MouseEvent) => {
+  const handleToggleFavorite = async (walletId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const updated = wallets.map(w => 
-      w.id === walletId ? { ...w, isFavorite: !w.isFavorite } : w
-    );
+    const updated = wallets.map((wallet) => {
+      if (wallet.id !== walletId) {
+        return wallet;
+      }
+      const nextFavorite = !wallet.isFavorite;
+      return {
+        ...wallet,
+        isFavorite: nextFavorite,
+        favoriteOrder: nextFavorite ? wallet.favoriteOrder ?? 0 : undefined,
+      };
+    });
     setWallets(updated);
     dispatch(fetchWalletsSuccess(updated));
+    const target = updated.find((wallet) => wallet.id === walletId);
+    if (target) {
+      try {
+        const saved = await walletsService.updateWallet(walletId, {
+          isFavorite: !!target.isFavorite,
+          favoriteOrder: target.isFavorite ? target.favoriteOrder ?? 0 : null,
+        });
+        const withSaved = updated.map((wallet) => (wallet.id === walletId ? saved : wallet));
+        setWallets(withSaved);
+        dispatch(fetchWalletsSuccess(withSaved));
+      } catch {
+        // Keep UI state; backend error handling can be added later.
+      }
+    }
   };
 
   // Drag and drop for favorites reordering in popover
@@ -215,7 +237,7 @@ const WalletsPage = () => {
     e.preventDefault();
   };
 
-  const handleFavoriteDrop = (targetId: string, category: WalletCategory) => {
+  const handleFavoriteDrop = async (targetId: string, category: WalletCategory) => {
     if (!draggedFavoriteId || draggedFavoriteId === targetId) {
       setDraggedFavoriteId(null);
       return;
@@ -244,6 +266,22 @@ const WalletsPage = () => {
 
       setWallets(updatedWallets);
       dispatch(fetchWalletsSuccess(updatedWallets));
+      const updates = reordered.map((wallet, index) => ({
+        id: wallet.id,
+        favoriteOrder: index,
+      }));
+      try {
+        await Promise.all(
+          updates.map((update) =>
+            walletsService.updateWallet(update.id, {
+              isFavorite: true,
+              favoriteOrder: update.favoriteOrder,
+            })
+          )
+        );
+      } catch {
+        // Keep UI state; backend error handling can be added later.
+      }
     }
     setDraggedFavoriteId(null);
   };
