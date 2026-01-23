@@ -14,6 +14,17 @@ import {
   Divider,
   useTheme,
   LinearProgress,
+  IconButton,
+  Menu,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
 } from '@mui/material';
 import { alpha, darken, lighten } from '@mui/material/styles';
 import {
@@ -28,12 +39,16 @@ import {
   ChevronRight as ChevronRightIcon,
   AccountBalanceWallet as WalletIcon,
   PieChart as PieChartIcon,
+  Add as AddIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import type { Wallet, WalletCategory } from '../types';
 import { formatCurrency } from '../utils/formatters';
 import { getWalletLabel, getWalletColor } from '../utils/walletConfig';
-import { getWalletIconEmoji } from '../utils/walletIcons';
+import { getWalletIconEmoji, walletIconOptions } from '../utils/walletIcons';
 import { walletsService } from '../api/wallets';
+import { useAppDispatch } from '../hooks/useAppStore';
+import { fetchWalletsSuccess } from '../features/wallet/walletSlice';
 
 // Category config with icons and descriptions
 const categoryConfig: Record<WalletCategory, { 
@@ -85,8 +100,19 @@ const WalletCategoryPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
+  const dispatch = useAppDispatch();
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [deleteMenuAnchor, setDeleteMenuAnchor] = useState<null | HTMLElement>(null);
+  const [deleteWallet, setDeleteWallet] = useState<Wallet | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [newWallet, setNewWallet] = useState({
+    name: '',
+    description: '',
+    currency: 'PLN',
+    icon: 'wallet',
+  });
 
   // Convert slug to category type
   const category = categorySlug ? slugToCategory[categorySlug] : undefined;
@@ -98,6 +124,7 @@ const WalletCategoryPage = () => {
         await new Promise((resolve) => setTimeout(resolve, 300));
         const allWallets = await walletsService.getWallets();
         setWallets(allWallets);
+        dispatch(fetchWalletsSuccess(allWallets));
       } catch {
         setWallets([]);
       } finally {
@@ -105,7 +132,42 @@ const WalletCategoryPage = () => {
       }
     };
     fetchWallets();
-  }, []);
+  }, [dispatch]);
+
+  const handleCreateWallet = async () => {
+    if (!category) return;
+    const created = await walletsService.createWallet({
+      name: newWallet.name,
+      type: category,
+      currency: newWallet.currency,
+      description: newWallet.description,
+      icon: newWallet.icon,
+    });
+    const updated = [...wallets, created];
+    setWallets(updated);
+    dispatch(fetchWalletsSuccess(updated));
+    setCreateDialogOpen(false);
+    setNewWallet({ name: '', description: '', currency: 'PLN', icon: 'wallet' });
+  };
+
+  const handleDeleteMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    setDeleteMenuAnchor(event.currentTarget);
+  };
+
+  const handleDeleteMenuClose = () => {
+    setDeleteMenuAnchor(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteWallet) return;
+    await walletsService.deleteWallet(deleteWallet.id);
+    const updated = wallets.filter((wallet) => wallet.id !== deleteWallet.id);
+    setWallets(updated);
+    dispatch(fetchWalletsSuccess(updated));
+    setDeleteDialogOpen(false);
+    setDeleteWallet(null);
+  };
 
   // Filter wallets by category
   const categoryWallets = useMemo(() => {
@@ -289,16 +351,64 @@ const WalletCategoryPage = () => {
       </Card>
 
       {/* Wallets Section */}
-      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
         <Typography variant="h6" fontWeight={600}>
           <WalletIcon sx={{ mr: 1, verticalAlign: 'middle', fontSize: 22 }} />
           Your {getWalletLabel(category)} Wallets
         </Typography>
-        <Chip 
-          label={`${stats.walletsCount} wallet${stats.walletsCount !== 1 ? 's' : ''}`}
-          size="small"
-          sx={{ bgcolor: alpha(headerBaseColor, 0.15), color: headerBaseColor }}
-        />
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            px: 1,
+            py: 0.5,
+            borderRadius: 999,
+            border: `1px solid ${alpha(headerBaseColor, 0.2)}`,
+            bgcolor: alpha(headerBaseColor, 0.06),
+          }}
+        >
+          <Chip
+            label={`${stats.walletsCount} wallet${stats.walletsCount !== 1 ? 's' : ''}`}
+            size="small"
+            sx={{
+              bgcolor: alpha(headerBaseColor, 0.15),
+              color: headerBaseColor,
+              fontWeight: 600,
+            }}
+          />
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<AddIcon />}
+            onClick={() => setCreateDialogOpen(true)}
+            sx={{
+              bgcolor: headerBaseColor,
+              boxShadow: 'none',
+              '&:hover': {
+                bgcolor: headerBaseColor,
+                boxShadow: `0 8px 20px -12px ${alpha(headerBaseColor, 0.8)}`,
+              },
+            }}
+          >
+            Add wallet
+          </Button>
+          <IconButton
+            size="small"
+            onClick={handleDeleteMenuOpen}
+            sx={{
+              color: headerBaseColor,
+              border: `1px dashed ${alpha(headerBaseColor, 0.4)}`,
+              '&:hover': {
+                borderColor: headerBaseColor,
+                bgcolor: alpha(headerBaseColor, 0.12),
+              },
+            }}
+            aria-label="Delete wallet"
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Box>
       </Box>
 
       {categoryWallets.length === 0 ? (
@@ -348,6 +458,9 @@ const WalletCategoryPage = () => {
                   }}
                 >
                   <CardActionArea
+                    component="div"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => navigate(`/wallets/${wallet.id}`, {
                       state: {
                         from: 'category',
@@ -355,6 +468,18 @@ const WalletCategoryPage = () => {
                         categoryLabel: category ? getWalletLabel(category) : 'Category',
                       },
                     })}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        navigate(`/wallets/${wallet.id}`, {
+                          state: {
+                            from: 'category',
+                            categoryPath: location.pathname,
+                            categoryLabel: category ? getWalletLabel(category) : 'Category',
+                          },
+                        });
+                      }
+                    }}
                     sx={{ height: '100%' }}
                   >
                     <CardContent sx={{ p: 2.5 }}>
@@ -506,6 +631,117 @@ const WalletCategoryPage = () => {
           </Grid>
         </Card>
       )}
+
+      <Menu
+        anchorEl={deleteMenuAnchor}
+        open={Boolean(deleteMenuAnchor)}
+        onClose={handleDeleteMenuClose}
+      >
+        {categoryWallets.length === 0 ? (
+          <MenuItem disabled>No wallets to delete</MenuItem>
+        ) : (
+          categoryWallets.map((wallet) => (
+            <MenuItem
+              key={wallet.id}
+              onClick={() => {
+                setDeleteWallet(wallet);
+                setDeleteDialogOpen(true);
+                handleDeleteMenuClose();
+              }}
+            >
+              <Box component="span" sx={{ fontSize: 18, mr: 1 }}>
+                {getWalletIconEmoji(wallet.icon)}
+              </Box>
+              {wallet.name}
+            </MenuItem>
+          ))
+        )}
+      </Menu>
+
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Delete wallet?</DialogTitle>
+        <DialogContent>
+          <Typography color="text.secondary">
+            This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button color="error" variant="contained" onClick={handleDeleteConfirm}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Add {getWalletLabel(category)} Wallet</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            label="Wallet Name"
+            value={newWallet.name}
+            onChange={(e) => setNewWallet({ ...newWallet, name: e.target.value })}
+            sx={{ mt: 2, mb: 2 }}
+          />
+          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+            <FormControl fullWidth>
+              <InputLabel>Currency</InputLabel>
+              <Select
+                value={newWallet.currency}
+                label="Currency"
+                onChange={(e) => setNewWallet({ ...newWallet, currency: e.target.value })}
+              >
+                {['PLN', 'USD', 'EUR', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD'].map((code) => (
+                  <MenuItem key={code} value={code}>
+                    {code}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth>
+              <InputLabel>Icon</InputLabel>
+              <Select
+                value={newWallet.icon}
+                label="Icon"
+                onChange={(e) => setNewWallet({ ...newWallet, icon: e.target.value })}
+              >
+                {walletIconOptions.map((iconOption) => (
+                  <MenuItem key={iconOption.id} value={iconOption.id}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box component="span" sx={{ fontSize: 18 }}>{iconOption.icon}</Box>
+                      {iconOption.label}
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+          <TextField
+            fullWidth
+            label="Description"
+            multiline
+            rows={2}
+            value={newWallet.description}
+            onChange={(e) => setNewWallet({ ...newWallet, description: e.target.value })}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleCreateWallet}
+            disabled={!newWallet.name.trim()}
+          >
+            Add Wallet
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
