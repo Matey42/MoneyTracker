@@ -41,7 +41,7 @@ import {
 import { useAppSelector, useAppDispatch } from '../hooks/useAppStore';
 import { logout } from '../features/auth/authSlice';
 import { useColorMode } from '../contexts/ColorModeContext';
-import type { WalletCategory } from '../types';
+import type { Wallet, WalletCategory } from '../types';
 import { getWalletLabel } from '../utils/walletConfig';
 import mtDark from '../assets/mt_dark.png';
 import mtLight from '../assets/mt_light.png';
@@ -120,6 +120,29 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         category,
       }));
   }, [wallets, categoryOrder]);
+
+  const walletById = useMemo(() => {
+    return wallets.reduce((lookup, wallet) => {
+      lookup[wallet.id] = wallet;
+      return lookup;
+    }, {} as Record<string, Wallet>);
+  }, [wallets]);
+
+  const activeCategoryPath = useMemo(() => {
+    const walletCategory = Object.values(categorySlug).find((slug) =>
+      location.pathname.startsWith(`/wallets/${slug}`) ||
+      location.pathname.startsWith(`/wallet/${slug}`) ||
+      location.pathname.startsWith(`/wallets/category/${slug}`)
+    );
+    if (walletCategory) {
+      return `/wallets/${walletCategory}`;
+    }
+
+    const match = location.pathname.match(/^\/wallets\/([^/]+)/);
+    const walletId = match?.[1];
+    const wallet = walletId ? walletById[walletId] : null;
+    return wallet ? `/wallets/${categorySlug[wallet.type as WalletCategory]}` : null;
+  }, [location.pathname, walletById]);
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -260,7 +283,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                     <ListItem key={child.text} disablePadding sx={{ mb: 0.5 }}>
                       <ListItemButton
                         onClick={() => handleNavigation(child.path)}
-                        selected={location.pathname === child.path}
+                        selected={location.pathname === child.path || activeCategoryPath === child.path}
                         sx={{
                           pl: 4,
                           borderRadius: 2,
