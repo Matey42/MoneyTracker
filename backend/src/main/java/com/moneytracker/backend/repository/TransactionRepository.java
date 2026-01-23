@@ -36,5 +36,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
            "ORDER BY t.transactionDate DESC, t.createdAt DESC")
     Page<Transaction> findAllAccessibleByUser(UUID userId, Pageable pageable);
     
+    @Query("SELECT t FROM Transaction t WHERE (t.wallet.owner.id = :userId OR " +
+           "EXISTS (SELECT m FROM WalletMember m WHERE m.wallet = t.wallet AND m.user.id = :userId)) " +
+           "AND t.transactionDate BETWEEN :startDate AND :endDate")
+    List<Transaction> findAllByUserInDateRange(UUID userId, LocalDate startDate, LocalDate endDate);
+    
     List<Transaction> findTop10ByWalletOwnerIdOrderByTransactionDateDescCreatedAtDesc(UUID userId);
 }
