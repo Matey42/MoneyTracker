@@ -116,7 +116,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       .map((category) => ({
         text: getWalletLabel(category),
         icon: categoryIcons[category],
-        path: `/wallets/${categorySlug[category]}`,
+        path: `/wallets/category/${categorySlug[category]}`,
         category,
       }));
   }, [wallets, categoryOrder]);
@@ -135,13 +135,13 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       location.pathname.startsWith(`/wallets/category/${slug}`)
     );
     if (walletCategory) {
-      return `/wallets/${walletCategory}`;
+      return `/wallets/category/${walletCategory}`;
     }
 
     const match = location.pathname.match(/^\/wallets\/([^/]+)/);
     const walletId = match?.[1];
     const wallet = walletId ? walletById[walletId] : null;
-    return wallet ? `/wallets/${categorySlug[wallet.type as WalletCategory]}` : null;
+    return wallet ? `/wallets/category/${categorySlug[wallet.type as WalletCategory]}` : null;
   }, [location.pathname, walletById]);
 
   if (!isAuthenticated) {
