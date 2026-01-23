@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -53,10 +53,18 @@ const getCategoryById = (categories: Category[], id?: string) => categories.find
 const getCategoryName = (categories: Category[], id?: string) => getCategoryById(categories, id)?.name || 'Uncategorized';
 const getCategoryColor = (categories: Category[], id?: string) => getCategoryById(categories, id)?.color || '#9E9E9E';
 
+type WalletDetailNavState = {
+  from?: 'wallets' | 'category';
+  categoryPath?: string;
+  categoryLabel?: string;
+};
+
 const WalletDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
+  const navState = location.state as WalletDetailNavState | null;
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -151,17 +159,27 @@ const WalletDetailPage = () => {
   }
 
   if (!wallet) {
+    const backTarget = navState?.from === 'category' ? (navState.categoryPath ?? '/wallets') : '/wallets';
+    const backLabel = navState?.from === 'category'
+      ? `Back to ${navState.categoryLabel ?? 'Category'}`
+      : 'Back to Wallets';
+
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
         <Typography variant="h5" gutterBottom>
           Wallet not found
         </Typography>
-        <Button startIcon={<BackIcon />} onClick={() => navigate('/wallets')}>
-          Back to Wallets
+        <Button startIcon={<BackIcon />} onClick={() => navigate(backTarget)}>
+          {backLabel}
         </Button>
       </Box>
     );
   }
+
+  const backTarget = navState?.from === 'category' ? (navState.categoryPath ?? '/wallets') : '/wallets';
+  const backLabel = navState?.from === 'category'
+    ? `Back to ${navState.categoryLabel ?? getWalletLabel(wallet.type)}`
+    : 'Back to Wallets';
 
   const headerBaseColor = getWalletColor(wallet.type);
   const headerTextColor = theme.palette.getContrastText(headerBaseColor);
@@ -180,10 +198,10 @@ const WalletDetailPage = () => {
       {/* Back Button */}
       <Button
         startIcon={<BackIcon />}
-        onClick={() => navigate('/wallets')}
+        onClick={() => navigate(backTarget)}
         sx={{ mb: 3 }}
       >
-        Back to Wallets
+        {backLabel}
       </Button>
 
       {/* Wallet Header Card */}

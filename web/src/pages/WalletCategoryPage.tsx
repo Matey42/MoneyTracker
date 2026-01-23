@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -83,6 +83,7 @@ const slugToCategory: Record<string, WalletCategory> = {
 const WalletCategoryPage = () => {
   const { category: categorySlug } = useParams<{ category: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -347,7 +348,13 @@ const WalletCategoryPage = () => {
                   }}
                 >
                   <CardActionArea
-                    onClick={() => navigate(`/wallets/${wallet.id}`)}
+                    onClick={() => navigate(`/wallets/${wallet.id}`, {
+                      state: {
+                        from: 'category',
+                        categoryPath: location.pathname,
+                        categoryLabel: category ? getWalletLabel(category) : 'Category',
+                      },
+                    })}
                     sx={{ height: '100%' }}
                   >
                     <CardContent sx={{ p: 2.5 }}>

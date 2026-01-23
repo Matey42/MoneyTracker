@@ -148,6 +148,10 @@ const WalletsPage = () => {
     icon: 'wallet',
   });
 
+  const handleWalletOpen = (walletId: string) => {
+    navigate(`/wallets/${walletId}`, { state: { from: 'wallets' } });
+  };
+
   useEffect(() => {
     const fetchWallets = async () => {
       dispatch(fetchWalletsStart());
@@ -946,7 +950,7 @@ const WalletsPage = () => {
                                     </Typography>
                                   </Box>
                                 }
-                                onClick={() => navigate(`/wallets/${wallet.id}`)}
+                                onClick={() => handleWalletOpen(wallet.id)}
                                 sx={{
                                   bgcolor: alpha(color, 0.06),
                                   borderColor: alpha(color, 0.2),
