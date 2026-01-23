@@ -348,6 +348,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           </ListItemIcon>
           Profile
         </MenuItem>
+        {/*
         <MenuItem onClick={() => { handleNavigation('/settings'); handleMenuClose(); }}>
           <ListItemIcon>
             <SettingsIcon fontSize="small" />
@@ -355,6 +356,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           Settings
         </MenuItem>
         <Divider />
+        */}
         <MenuItem onClick={toggleColorMode}>
           <ListItemIcon>
             {mode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
