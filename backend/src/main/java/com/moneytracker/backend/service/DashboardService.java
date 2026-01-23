@@ -1,6 +1,7 @@
 package com.moneytracker.backend.service;
 
 import com.moneytracker.backend.dto.DashboardResponse;
+import com.moneytracker.backend.dto.NetWorthHistoryResponse;
 import com.moneytracker.backend.dto.TransactionResponse;
 import com.moneytracker.backend.dto.WalletResponse;
 import com.moneytracker.backend.entity.*;
@@ -14,6 +15,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -160,5 +163,76 @@ public class DashboardService {
                 .filter(Objects::nonNull)
                 .sorted((a, b) -> b.amount().compareTo(a.amount()))
                 .toList();
+    }
+    
+    public NetWorthHistoryResponse getNetWorthHistory(User user, String period) {
+        UUID userId = user.getId();
+        LocalDate today = LocalDate.now();
+        LocalDate startDate;
+        int dataPoints;
+        
+        switch (period.toUpperCase()) {
+            case "30D" -> {
+                startDate = today.minusDays(30);
+                dataPoints = 10;
+            }
+            case "YTD" -> {
+                startDate = LocalDate.of(today.getYear(), 1, 1);
+                dataPoints = (int) ChronoUnit.DAYS.between(startDate, today) / 7 + 1;
+                dataPoints = Math.min(dataPoints, 15);
+            }
+            case "1Y" -> {
+                startDate = today.minusYears(1);
+                dataPoints = 12;
+            }
+            default -> { // 7D
+                startDate = today.minusDays(6);
+                dataPoints = 7;
+            }
+        }
+        
+        List<NetWorthHistoryResponse.NetWorthPoint> history = new ArrayList<>();
+        long totalDays = ChronoUnit.DAYS.between(startDate, today);
+        long interval = Math.max(1, totalDays / (dataPoints - 1));
+        
+        DateTimeFormatter dayFormatter = DateTimeFormatter.ofPattern("EEE");
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM d");
+        
+        for (int i = 0; i < dataPoints; i++) {
+            LocalDate date;
+            if (i == dataPoints - 1) {
+                date = today;
+            } else {
+                date = startDate.plusDays(i * interval);
+            }
+            
+            BigDecimal balance = transactionRepository.calculateTotalBalanceUpToDate(userId, date);
+            if (balance == null) {
+                balance = BigDecimal.ZERO;
+            }
+            
+            String label;
+            if (date.equals(today)) {
+                label = "Today";
+            } else if (period.equalsIgnoreCase("7D")) {
+                label = date.format(dayFormatter);
+            } else {
+                label = date.format(dateFormatter);
+            }
+            
+            history.add(new NetWorthHistoryResponse.NetWorthPoint(date, balance, label));
+        }
+        
+        BigDecimal currentNetWorth = history.isEmpty() ? BigDecimal.ZERO : history.get(history.size() - 1).value();
+        BigDecimal startingNetWorth = history.isEmpty() ? BigDecimal.ZERO : history.get(0).value();
+        BigDecimal periodChange = currentNetWorth.subtract(startingNetWorth);
+        BigDecimal periodChangePercent = BigDecimal.ZERO;
+        
+        if (startingNetWorth.compareTo(BigDecimal.ZERO) != 0) {
+            periodChangePercent = periodChange.multiply(BigDecimal.valueOf(100))
+                    .divide(startingNetWorth, 2, RoundingMode.HALF_UP);
+        }
+        
+        return new NetWorthHistoryResponse(history, currentNetWorth, periodChange, periodChangePercent);
     }
 }

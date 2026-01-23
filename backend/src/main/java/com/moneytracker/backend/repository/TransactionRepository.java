@@ -42,4 +42,16 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
     List<Transaction> findAllByUserInDateRange(UUID userId, LocalDate startDate, LocalDate endDate);
     
     List<Transaction> findTop10ByWalletOwnerIdOrderByTransactionDateDescCreatedAtDesc(UUID userId);
+    
+    @Query("SELECT COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amount ELSE 0 END), 0) - " +
+           "COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amount ELSE 0 END), 0) " +
+           "FROM Transaction t WHERE t.wallet.id = :walletId AND t.transactionDate <= :date")
+    BigDecimal calculateBalanceUpToDate(UUID walletId, LocalDate date);
+    
+    @Query("SELECT COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amount ELSE 0 END), 0) - " +
+           "COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amount ELSE 0 END), 0) " +
+           "FROM Transaction t WHERE (t.wallet.owner.id = :userId OR " +
+           "EXISTS (SELECT m FROM WalletMember m WHERE m.wallet = t.wallet AND m.user.id = :userId)) " +
+           "AND t.transactionDate <= :date")
+    BigDecimal calculateTotalBalanceUpToDate(UUID userId, LocalDate date);
 }
