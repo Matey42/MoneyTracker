@@ -1,4 +1,4 @@
-import type { Wallet, CreateWalletRequest } from '../types';
+import type { Wallet, CreateWalletRequest, UpdateWalletRequest, BatchFavoriteUpdate } from '../types';
 import { isWalletsApiEnabled } from '../config/appConfig';
 import { request } from './httpClient';
 import { tokenStorage } from './tokenStorage';
@@ -21,6 +21,34 @@ export const walletsService = {
     }
 
     return request<Wallet>(`/wallets/${id}`, {
+      authToken: tokenStorage.getAccessToken(),
+    });
+  },
+
+  getFavoriteWallets: async (): Promise<Wallet[]> => {
+    if (!isWalletsApiEnabled) {
+      return mockWallets.filter((wallet) => wallet.isFavorite);
+    }
+
+    return request<Wallet[]>('/wallets/favorites', {
+      authToken: tokenStorage.getAccessToken(),
+    });
+  },
+
+  updateFavorites: async (updates: BatchFavoriteUpdate[]): Promise<Wallet[]> => {
+    if (!isWalletsApiEnabled) {
+      return mockWallets.map((wallet) => {
+        const update = updates.find((u) => u.walletId === wallet.id);
+        if (update) {
+          return { ...wallet, isFavorite: update.isFavorite, favoriteOrder: update.favoriteOrder };
+        }
+        return wallet;
+      });
+    }
+
+    return request<Wallet[]>('/wallets/favorites', {
+      method: 'PUT',
+      body: { updates },
       authToken: tokenStorage.getAccessToken(),
     });
   },
@@ -49,7 +77,7 @@ export const walletsService = {
     });
   },
 
-  updateWallet: async (walletId: string, payload: Partial<Wallet>): Promise<Wallet> => {
+  updateWallet: async (walletId: string, payload: UpdateWalletRequest): Promise<Wallet> => {
     if (!isWalletsApiEnabled) {
       const current = mockWallets.find((wallet) => wallet.id === walletId);
       return { ...(current ?? payload), ...payload } as Wallet;

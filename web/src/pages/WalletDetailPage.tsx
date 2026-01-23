@@ -264,9 +264,16 @@ const WalletDetailPage = () => {
     if (!wallet || !transferTargetId) return;
     const target = allWallets.find((item) => item.id === transferTargetId);
     if (!target) return;
-    await walletsService.updateWallet(target.id, {
-      balance: target.balance + wallet.balance,
+    
+    // Create a transfer transaction to move funds to target wallet
+    await transactionsService.createTransaction({
+      walletId: wallet.id,
+      type: 'TRANSFER',
+      amount: wallet.balance,
+      targetWalletId: target.id,
+      description: `Transfer to ${target.name}`,
     });
+    
     await walletsService.deleteWallet(wallet.id);
     await refreshWallets();
     navigate(`/wallets/${target.id}`, {

@@ -47,6 +47,22 @@ export interface CreateWalletRequest {
   icon?: string;
 }
 
+export interface UpdateWalletRequest {
+  name?: string;
+  type?: WalletCategory;
+  currency?: string;
+  description?: string;
+  icon?: string;
+  isFavorite?: boolean;
+  favoriteOrder?: number | null;
+}
+
+export interface BatchFavoriteUpdate {
+  walletId: string;
+  isFavorite: boolean;
+  favoriteOrder?: number | null;
+}
+
 // Member types
 export type MemberRole = 'OWNER' | 'MEMBER' | 'VIEWER';
 
@@ -73,6 +89,20 @@ export interface Category {
   name: string;
   type: CategoryType;
 
+  icon?: string;
+  color?: string;
+  isSystem?: boolean;
+}
+
+export interface CreateCategoryRequest {
+  name: string;
+  type: CategoryType;
+  icon?: string;
+  color?: string;
+}
+
+export interface UpdateCategoryRequest {
+  name?: string;
   icon?: string;
   color?: string;
 }
@@ -118,6 +148,14 @@ export interface CreateTransactionRequest {
   transactionDate?: string;
 }
 
+export interface UpdateTransactionRequest {
+  type?: TransactionType;
+  amount?: number;
+  categoryId?: string;
+  description?: string;
+  transactionDate?: string;
+}
+
 // Liability types
 export type LiabilityType = 'LOAN' | 'MORTGAGE' | 'PERSONAL_DEBT';
 
@@ -146,6 +184,7 @@ export interface DashboardData {
   totalBalance: number;
   monthlyIncome: number;
   monthlyExpense: number;
+  monthlyChange?: number;
   wallets: Wallet[];
   recentTransactions: Transaction[];
   categoryBreakdown: CategoryBreakdown[];
@@ -157,6 +196,15 @@ export interface CategoryBreakdown {
   categoryColor: string;
   amount: number;
   percentage: number;
+}
+
+// User update types
+export interface UpdateUserRequest {
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  currentPassword?: string;
+  newPassword?: string;
 }
 
 // API Response types
