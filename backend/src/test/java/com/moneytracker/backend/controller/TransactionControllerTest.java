@@ -3,6 +3,7 @@ package com.moneytracker.backend.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moneytracker.backend.dto.CreateTransactionRequest;
 import com.moneytracker.backend.dto.TransactionResponse;
+import com.moneytracker.backend.dto.UpdateTransactionRequest;
 import com.moneytracker.backend.entity.TransactionType;
 import com.moneytracker.backend.entity.User;
 import com.moneytracker.backend.service.TransactionService;
@@ -30,9 +31,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -122,6 +121,58 @@ class TransactionControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(transactionService).deleteTransaction(transactionId, user);
+    }
+
+    @Test
+    void getTransaction_returnsSingleTransaction() throws Exception {
+        UUID transactionId = UUID.randomUUID();
+        TransactionResponse response = sampleTransactionResponse();
+        when(transactionService.getTransactionById(transactionId, user)).thenReturn(response);
+
+        mockMvc.perform(get("/transactions/{transactionId}", transactionId).with(auth()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(response.id().toString()))
+                .andExpect(jsonPath("$.description").value(response.description()));
+
+        verify(transactionService).getTransactionById(transactionId, user);
+    }
+
+    @Test
+    void updateTransaction_returnsUpdatedTransaction() throws Exception {
+        UUID transactionId = UUID.randomUUID();
+        UpdateTransactionRequest request = new UpdateTransactionRequest(
+                TransactionType.INCOME,
+                BigDecimal.valueOf(100),
+                null,
+                "Updated description",
+                LocalDate.parse("2024-03-01")
+        );
+        TransactionResponse response = sampleTransactionResponse();
+        when(transactionService.updateTransaction(eq(transactionId), any(UpdateTransactionRequest.class), eq(user)))
+                .thenReturn(response);
+
+        mockMvc.perform(put("/transactions/{transactionId}", transactionId)
+                        .with(auth())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(response.id().toString()));
+
+        verify(transactionService).updateTransaction(eq(transactionId), any(UpdateTransactionRequest.class), eq(user));
+    }
+
+    @Test
+    void getWalletTransactions_returnsPage() throws Exception {
+        UUID walletId = UUID.randomUUID();
+        TransactionResponse response = sampleTransactionResponse();
+        Page<TransactionResponse> page = new PageImpl<>(List.of(response), PageRequest.of(0, 20), 1);
+        when(transactionService.getTransactionsByWallet(eq(walletId), eq(user), any())).thenReturn(page);
+
+        mockMvc.perform(get("/wallets/{walletId}/transactions", walletId).with(auth()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(response.id().toString()));
+
+        verify(transactionService).getTransactionsByWallet(eq(walletId), eq(user), any());
     }
 
     private RequestPostProcessor auth() {
