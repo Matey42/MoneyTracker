@@ -31,6 +31,7 @@ import {
   Divider,
   useTheme,
   Tooltip,
+  Alert,
 } from '@mui/material';
 import { alpha, darken, lighten } from '@mui/material/styles';
 import {
@@ -41,14 +42,21 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   SwapHoriz as TransferIcon,
+  AccountBalance as BankIcon,
+  ShowChart as InvestmentsIcon,
+  CurrencyBitcoin as CryptoIcon,
+  Home as RealEstateIcon,
+  MoreHoriz as OtherIcon,
 } from '@mui/icons-material';
-import type { Wallet, Transaction, TransactionType, Category } from '../types';
+import type { Wallet, WalletCategory, Transaction, TransactionType, Category } from '../types';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { getWalletLabel, getWalletColor } from '../utils/walletConfig';
-import { getWalletIconEmoji } from '../utils/walletIcons';
+import { getWalletIconEmoji, walletIconOptions } from '../utils/walletIcons';
 import { walletsService } from '../api/wallets';
 import { transactionsService } from '../api/transactions';
 import { categoriesService } from '../api/categories';
+import { useAppDispatch } from '../hooks/useAppStore';
+import { fetchWalletsSuccess } from '../features/wallet/walletSlice';
 
 // Category lookup helpers
 const getCategoryById = (categories: Category[], id?: string) => categories.find((c) => c.id === id);
@@ -61,23 +69,53 @@ type WalletDetailNavState = {
   categoryLabel?: string;
 };
 
-type WalletDetailAction = 'edit' | 'transfer' | null;
+const walletTypeOptions: WalletCategory[] = ['BANK_CASH', 'INVESTMENTS', 'CRYPTO', 'REAL_ESTATE', 'OTHER'];
+
+const categoryIcons: Record<WalletCategory, React.ReactNode> = {
+  BANK_CASH: <BankIcon />,
+  INVESTMENTS: <InvestmentsIcon />,
+  CRYPTO: <CryptoIcon />,
+  REAL_ESTATE: <RealEstateIcon />,
+  OTHER: <OtherIcon />,
+};
+
+const currencies = [
+  { code: 'PLN', name: 'Polish Zloty' },
+  { code: 'USD', name: 'US Dollar' },
+  { code: 'EUR', name: 'Euro' },
+  { code: 'GBP', name: 'British Pound' },
+  { code: 'CHF', name: 'Swiss Franc' },
+  { code: 'JPY', name: 'Japanese Yen' },
+  { code: 'CAD', name: 'Canadian Dollar' },
+  { code: 'AUD', name: 'Australian Dollar' },
+];
 
 const WalletDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
+  const dispatch = useAppDispatch();
   const navState = location.state as WalletDetailNavState | null;
   const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [allWallets, setAllWallets] = useState<Wallet[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [actionDialog, setActionDialog] = useState<WalletDetailAction>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    type: 'BANK_CASH' as WalletCategory,
+    currency: 'PLN',
+    description: '',
+    icon: 'wallet',
+  });
+  const [transferTargetId, setTransferTargetId] = useState('');
   const [newTransaction, setNewTransaction] = useState({
     type: 'EXPENSE' as TransactionType,
     amount: '',
@@ -90,24 +128,39 @@ const WalletDetailPage = () => {
     const fetchData = async () => {
       try {
         await new Promise((resolve) => setTimeout(resolve, 500));
-        const [foundWallet, data, categoriesData] = await Promise.all([
+        const [foundWallet, data, categoriesData, walletsData] = await Promise.all([
           id ? walletsService.getWallet(id) : Promise.resolve(null),
           id ? transactionsService.getTransactions(id) : Promise.resolve([]),
           categoriesService.getCategories(),
+          walletsService.getWallets(),
         ]);
         setWallet(foundWallet || null);
         setTransactions(data);
         setCategories(categoriesData);
+        setAllWallets(walletsData);
+        dispatch(fetchWalletsSuccess(walletsData));
       } catch {
         setWallet(null);
         setTransactions([]);
         setCategories([]);
+        setAllWallets([]);
       } finally {
         setIsLoading(false);
       }
     };
     fetchData();
-  }, [id]);
+  }, [dispatch, id]);
+
+  useEffect(() => {
+    if (!wallet) return;
+    setEditForm({
+      name: wallet.name,
+      type: wallet.type,
+      currency: wallet.currency,
+      description: wallet.description ?? '',
+      icon: wallet.icon ?? 'wallet',
+    });
+  }, [wallet]);
 
   const handleCreateTransaction = async () => {
     if (!wallet) return;
@@ -187,11 +240,56 @@ const WalletDetailPage = () => {
     ? `Back to ${navState.categoryLabel ?? getWalletLabel(wallet.type)}`
     : 'Back to Wallets';
 
+  const refreshWallets = async () => {
+    const updated = await walletsService.getWallets();
+    setAllWallets(updated);
+    dispatch(fetchWalletsSuccess(updated));
+  };
+
+  const handleEditSave = async () => {
+    if (!wallet) return;
+    const updatedWallet = await walletsService.updateWallet(wallet.id, {
+      name: editForm.name,
+      type: editForm.type,
+      currency: editForm.currency,
+      description: editForm.description,
+      icon: editForm.icon,
+    });
+    setWallet(updatedWallet);
+    await refreshWallets();
+    setEditDialogOpen(false);
+  };
+
+  const handleTransfer = async () => {
+    if (!wallet || !transferTargetId) return;
+    const target = allWallets.find((item) => item.id === transferTargetId);
+    if (!target) return;
+    await walletsService.updateWallet(target.id, {
+      balance: target.balance + wallet.balance,
+    });
+    await walletsService.deleteWallet(wallet.id);
+    await refreshWallets();
+    navigate(`/wallets/${target.id}`, {
+      state: navState?.from === 'category'
+        ? {
+            from: 'category',
+            categoryPath: navState.categoryPath,
+            categoryLabel: navState.categoryLabel,
+          }
+        : { from: 'wallets' },
+    });
+  };
+
   const handleDeleteWallet = async () => {
     if (!wallet) return;
     await walletsService.deleteWallet(wallet.id);
+    await refreshWallets();
     navigate(backTarget);
   };
+
+  const transferTargets = wallet
+    ? allWallets.filter((item) => item.type === wallet.type && item.id !== wallet.id)
+    : [];
 
   const headerBaseColor = getWalletColor(wallet.type);
   const headerTextColor = theme.palette.getContrastText(headerBaseColor);
@@ -280,7 +378,7 @@ const WalletDetailPage = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Tooltip title="Edit wallet" arrow>
                 <IconButton
-                  onClick={() => setActionDialog('edit')}
+                  onClick={() => setEditDialogOpen(true)}
                   sx={{
                     color: headerTextColor,
                     bgcolor: alpha(headerTextColor, 0.12),
@@ -292,7 +390,7 @@ const WalletDetailPage = () => {
               </Tooltip>
               <Tooltip title="Transfer" arrow>
                 <IconButton
-                  onClick={() => setActionDialog('transfer')}
+                  onClick={() => setTransferDialogOpen(true)}
                   sx={{
                     color: headerTextColor,
                     bgcolor: alpha(headerTextColor, 0.12),
@@ -636,17 +734,195 @@ const WalletDetailPage = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={actionDialog !== null} onClose={() => setActionDialog(null)}>
-        <DialogTitle>{actionDialog === 'edit' ? 'Edit wallet' : 'Transfer'}</DialogTitle>
+      <Dialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Edit Wallet</DialogTitle>
         <DialogContent>
-          <Typography color="text.secondary">
-            {actionDialog === 'edit'
-              ? 'Editing wallet details will be available here soon.'
-              : 'Transfers between wallets will be available here soon.'}
+          <TextField
+            autoFocus
+            fullWidth
+            label="Wallet Name"
+            value={editForm.name}
+            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+            sx={{ mt: 2, mb: 2 }}
+          />
+          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+            <FormControl fullWidth>
+              <InputLabel>Type</InputLabel>
+              <Select
+                value={editForm.type}
+                label="Type"
+                onChange={(e) => setEditForm({ ...editForm, type: e.target.value as WalletCategory })}
+              >
+                {walletTypeOptions.map((type) => (
+                  <MenuItem key={type} value={type}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Avatar
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          bgcolor: alpha(getWalletColor(type), 0.12),
+                          color: getWalletColor(type),
+                        }}
+                      >
+                        {categoryIcons[type]}
+                      </Avatar>
+                      {getWalletLabel(type)}
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth>
+              <InputLabel>Currency</InputLabel>
+              <Select
+                value={editForm.currency}
+                label="Currency"
+                onChange={(e) => setEditForm({ ...editForm, currency: e.target.value })}
+              >
+                {currencies.map((curr) => (
+                  <MenuItem key={curr.code} value={curr.code}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography fontWeight={600}>{curr.code}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {curr.name}
+                      </Typography>
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+            Icon
           </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+            {walletIconOptions.map((iconOption) => (
+              <Box
+                key={iconOption.id}
+                onClick={() => setEditForm({ ...editForm, icon: iconOption.id })}
+                sx={{
+                  width: 48,
+                  height: 48,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 2,
+                  border: 2,
+                  borderColor: editForm.icon === iconOption.id ? 'primary.main' : 'divider',
+                  bgcolor: editForm.icon === iconOption.id ? alpha(theme.palette.primary.main, 0.08) : 'transparent',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  fontSize: 24,
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    bgcolor: alpha(theme.palette.primary.main, 0.04),
+                  },
+                }}
+              >
+                {iconOption.icon}
+              </Box>
+            ))}
+          </Box>
+
+          <TextField
+            fullWidth
+            label="Description (optional)"
+            value={editForm.description}
+            onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+            multiline
+            rows={2}
+          />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setActionDialog(null)}>Close</Button>
+          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleEditSave}
+            disabled={!editForm.name.trim()}
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={transferDialogOpen}
+        onClose={() => setTransferDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Transfer Wallet Balance</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, mb: 2 }}>
+            <Avatar sx={{ bgcolor: alpha(headerBaseColor, 0.15), color: headerBaseColor }}>
+              <TransferIcon />
+            </Avatar>
+            <Box>
+              <Typography variant="subtitle1" fontWeight={600}>
+                Move balance to another {getWalletLabel(wallet.type)} wallet
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                The current wallet will be deleted after the transfer.
+              </Typography>
+            </Box>
+          </Box>
+
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            This action will delete "{wallet.name}" after transferring its balance.
+          </Alert>
+
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Transfer To</InputLabel>
+            <Select
+              value={transferTargetId}
+              label="Transfer To"
+              onChange={(e) => setTransferTargetId(e.target.value)}
+            >
+              {transferTargets.length === 0 ? (
+                <MenuItem disabled value="">
+                  No other wallets available in this category
+                </MenuItem>
+              ) : (
+                transferTargets.map((target) => (
+                  <MenuItem key={target.id} value={target.id}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box component="span" sx={{ fontSize: 18 }}>
+                        {getWalletIconEmoji(target.icon)}
+                      </Box>
+                      <Typography fontWeight={600}>{target.name}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {formatCurrency(target.balance, target.currency)}
+                      </Typography>
+                    </Box>
+                  </MenuItem>
+                ))
+              )}
+            </Select>
+          </FormControl>
+
+          <TextField
+            fullWidth
+            label="Transfer Amount"
+            value={formatCurrency(wallet.balance, wallet.currency)}
+            InputProps={{ readOnly: true }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTransferDialogOpen(false)}>Cancel</Button>
+          <Button
+            color="warning"
+            variant="contained"
+            onClick={handleTransfer}
+            disabled={!transferTargetId || transferTargets.length === 0}
+          >
+            Transfer and Delete
+          </Button>
         </DialogActions>
       </Dialog>
 
