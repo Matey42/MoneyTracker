@@ -1,5 +1,6 @@
 package com.moneytracker.backend.controller;
 
+import com.moneytracker.backend.dto.BatchFavoriteUpdateRequest;
 import com.moneytracker.backend.dto.CreateWalletRequest;
 import com.moneytracker.backend.dto.UpdateWalletRequest;
 import com.moneytracker.backend.dto.WalletResponse;
@@ -33,6 +34,13 @@ public class WalletController {
     @GetMapping("/favorites")
     public ResponseEntity<List<WalletResponse>> getFavoriteWallets(@AuthenticationPrincipal User user) {
         List<WalletResponse> wallets = walletService.getFavoriteWallets(user);
+        return ResponseEntity.ok(wallets);
+    }
+    
+    @PutMapping("/favorites")
+    public ResponseEntity<List<WalletResponse>> updateFavorites(@Valid @RequestBody BatchFavoriteUpdateRequest request,
+                                                                 @AuthenticationPrincipal User user) {
+        List<WalletResponse> wallets = walletService.updateFavorites(request, user);
         return ResponseEntity.ok(wallets);
     }
 

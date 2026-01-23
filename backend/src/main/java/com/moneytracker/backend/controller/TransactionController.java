@@ -2,6 +2,7 @@ package com.moneytracker.backend.controller;
 
 import com.moneytracker.backend.dto.CreateTransactionRequest;
 import com.moneytracker.backend.dto.TransactionResponse;
+import com.moneytracker.backend.dto.UpdateTransactionRequest;
 import com.moneytracker.backend.entity.User;
 import com.moneytracker.backend.service.TransactionService;
 import jakarta.validation.Valid;
@@ -65,12 +66,27 @@ public class TransactionController {
         return ResponseEntity.ok(balance);
     }
 
+    @GetMapping("/transactions/{transactionId}")
+    public ResponseEntity<TransactionResponse> getTransaction(@PathVariable UUID transactionId,
+                                                               @AuthenticationPrincipal User user) {
+        TransactionResponse transaction = transactionService.getTransactionById(transactionId, user);
+        return ResponseEntity.ok(transaction);
+    }
+
     @PostMapping("/transactions")
     public ResponseEntity<TransactionResponse> createTransaction(
             @Valid @RequestBody CreateTransactionRequest request,
             @AuthenticationPrincipal User user) {
         TransactionResponse transaction = transactionService.createTransaction(request, user);
         return ResponseEntity.status(HttpStatus.CREATED).body(transaction);
+    }
+    
+    @PutMapping("/transactions/{transactionId}")
+    public ResponseEntity<TransactionResponse> updateTransaction(@PathVariable UUID transactionId,
+                                                                  @Valid @RequestBody UpdateTransactionRequest request,
+                                                                  @AuthenticationPrincipal User user) {
+        TransactionResponse transaction = transactionService.updateTransaction(transactionId, request, user);
+        return ResponseEntity.ok(transaction);
     }
 
     @DeleteMapping("/transactions/{transactionId}")
