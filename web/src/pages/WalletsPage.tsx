@@ -822,12 +822,12 @@ const WalletsPage = () => {
                 component="div"
                 role={hasWallets ? 'button' : undefined}
                 tabIndex={hasWallets ? 0 : -1}
-                onClick={() => hasWallets && navigate(`/wallets/${categorySlug[type.value]}`)}
+                onClick={() => hasWallets && navigate(`/wallets/category/${categorySlug[type.value]}`)}
                 onKeyDown={(event) => {
                   if (!hasWallets) return;
                   if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
-                    navigate(`/wallets/${categorySlug[type.value]}`);
+                    navigate(`/wallets/category/${categorySlug[type.value]}`);
                   }
                 }}
                 disabled={!hasWallets}

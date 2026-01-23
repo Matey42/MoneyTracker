@@ -10,6 +10,7 @@ import {
   DashboardPage,
   WalletsPage,
   WalletDetailPage,
+  WalletCategoryPage,
   TransactionsPage,
   NotFoundPage,
   ReportsPage,
@@ -33,6 +34,7 @@ function AppContent() {
           {/* Protected routes */}
           <Route path="/dashboard" element={<MainLayout><DashboardPage /></MainLayout>} />
           <Route path="/wallets" element={<MainLayout><WalletsPage /></MainLayout>} />
+          <Route path="/wallets/category/:category" element={<MainLayout><WalletCategoryPage /></MainLayout>} />
           <Route path="/wallets/:id" element={<MainLayout><WalletDetailPage /></MainLayout>} />
           <Route path="/transactions" element={<MainLayout><TransactionsPage /></MainLayout>} />
           <Route path="/reports" element={<MainLayout><ReportsPage /></MainLayout>} />
