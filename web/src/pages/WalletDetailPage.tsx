@@ -30,6 +30,7 @@ import {
   Skeleton,
   Divider,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { alpha, darken, lighten } from '@mui/material/styles';
 import {
@@ -39,6 +40,7 @@ import {
   TrendingDown as ExpenseIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  SwapHoriz as TransferIcon,
 } from '@mui/icons-material';
 import type { Wallet, Transaction, TransactionType, Category } from '../types';
 import { formatCurrency, formatDate } from '../utils/formatters';
@@ -59,6 +61,8 @@ type WalletDetailNavState = {
   categoryLabel?: string;
 };
 
+type WalletDetailAction = 'edit' | 'transfer' | null;
+
 const WalletDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -72,6 +76,8 @@ const WalletDetailPage = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [actionDialog, setActionDialog] = useState<WalletDetailAction>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [newTransaction, setNewTransaction] = useState({
     type: 'EXPENSE' as TransactionType,
     amount: '',
@@ -181,6 +187,12 @@ const WalletDetailPage = () => {
     ? `Back to ${navState.categoryLabel ?? getWalletLabel(wallet.type)}`
     : 'Back to Wallets';
 
+  const handleDeleteWallet = async () => {
+    if (!wallet) return;
+    await walletsService.deleteWallet(wallet.id);
+    navigate(backTarget);
+  };
+
   const headerBaseColor = getWalletColor(wallet.type);
   const headerTextColor = theme.palette.getContrastText(headerBaseColor);
   const headerAccentBg = alpha(headerTextColor, 0.2);
@@ -265,9 +277,44 @@ const WalletDetailPage = () => {
                 />
               </Box>
             </Box>
-            <IconButton sx={{ color: headerTextColor }}>
-              <EditIcon />
-            </IconButton>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Tooltip title="Edit wallet" arrow>
+                <IconButton
+                  onClick={() => setActionDialog('edit')}
+                  sx={{
+                    color: headerTextColor,
+                    bgcolor: alpha(headerTextColor, 0.12),
+                    '&:hover': { bgcolor: alpha(headerTextColor, 0.2) },
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Transfer" arrow>
+                <IconButton
+                  onClick={() => setActionDialog('transfer')}
+                  sx={{
+                    color: headerTextColor,
+                    bgcolor: alpha(headerTextColor, 0.12),
+                    '&:hover': { bgcolor: alpha(headerTextColor, 0.2) },
+                  }}
+                >
+                  <TransferIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Delete wallet" arrow>
+                <IconButton
+                  onClick={() => setDeleteDialogOpen(true)}
+                  sx={{
+                    color: headerTextColor,
+                    bgcolor: alpha(headerTextColor, 0.12),
+                    '&:hover': { bgcolor: alpha(headerTextColor, 0.2) },
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
           </Box>
 
           <Typography variant="h3" fontWeight={700}>
@@ -585,6 +632,35 @@ const WalletDetailPage = () => {
             color={newTransaction.type === 'INCOME' ? 'success' : 'error'}
           >
             {newTransaction.type === 'INCOME' ? 'Add Income' : 'Add Expense'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={actionDialog !== null} onClose={() => setActionDialog(null)}>
+        <DialogTitle>{actionDialog === 'edit' ? 'Edit wallet' : 'Transfer'}</DialogTitle>
+        <DialogContent>
+          <Typography color="text.secondary">
+            {actionDialog === 'edit'
+              ? 'Editing wallet details will be available here soon.'
+              : 'Transfers between wallets will be available here soon.'}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setActionDialog(null)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Delete wallet?</DialogTitle>
+        <DialogContent>
+          <Typography color="text.secondary">
+            This action cannot be undone. Your wallet and related data will be removed.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button color="error" variant="contained" onClick={handleDeleteWallet}>
+            Delete
           </Button>
         </DialogActions>
       </Dialog>
