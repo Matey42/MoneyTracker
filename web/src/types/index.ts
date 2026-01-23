@@ -198,6 +198,20 @@ export interface CategoryBreakdown {
   percentage: number;
 }
 
+// Net Worth History types
+export interface NetWorthHistoryResponse {
+  history: NetWorthPoint[];
+  currentNetWorth: number;
+  periodChange: number;
+  periodChangePercent: number;
+}
+
+export interface NetWorthPoint {
+  date: string;
+  value: number;
+  label: string;
+}
+
 // User update types
 export interface UpdateUserRequest {
   email?: string;

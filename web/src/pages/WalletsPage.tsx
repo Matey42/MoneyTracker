@@ -54,11 +54,12 @@ import {
 } from '@mui/icons-material';
 import { useAppDispatch } from '../hooks/useAppStore';
 import { fetchWalletsFailure, fetchWalletsStart, fetchWalletsSuccess } from '../features/wallet/walletSlice';
-import type { Wallet, WalletCategory } from '../types';
+import type { Wallet, WalletCategory, NetWorthHistoryResponse } from '../types';
 import { formatCurrency, getRelativeTime } from '../utils/formatters';
 import { getWalletColor } from '../utils/walletConfig';
 import { getWalletIconEmoji, walletIconOptions } from '../utils/walletIcons';
 import { walletsService } from '../api/wallets';
+import { dashboardService, type NetWorthPeriod } from '../api/dashboard';
 
 const walletTypes: { value: WalletCategory; label: string }[] = [
   { value: 'BANK_CASH', label: 'Bank & Cash' },
@@ -79,37 +80,6 @@ const currencies = [
   { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
   { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
 ];
-
-// Mock net worth history data - more detailed
-const mockNetWorthHistory = {
-  '7D': [
-    { date: '2026-01-09', value: 180500, label: 'Thu' },
-    { date: '2026-01-10', value: 181200, label: 'Fri' },
-    { date: '2026-01-11', value: 179800, label: 'Sat' },
-    { date: '2026-01-12', value: 182400, label: 'Sun' },
-    { date: '2026-01-13', value: 184100, label: 'Mon' },
-    { date: '2026-01-14', value: 185800, label: 'Tue' },
-    { date: '2026-01-15', value: 188820.5, label: 'Today' },
-  ],
-  '30D': [
-    { date: '2025-12-16', value: 172000, label: 'Dec 16' },
-    { date: '2025-12-20', value: 173500, label: 'Dec 20' },
-    { date: '2025-12-24', value: 175500, label: 'Dec 24' },
-    { date: '2025-12-28', value: 176800, label: 'Dec 28' },
-    { date: '2026-01-01', value: 178200, label: 'Jan 1' },
-    { date: '2026-01-05', value: 180000, label: 'Jan 5' },
-    { date: '2026-01-09', value: 182500, label: 'Jan 9' },
-    { date: '2026-01-13', value: 185000, label: 'Jan 13' },
-    { date: '2026-01-15', value: 188820.5, label: 'Today' },
-  ],
-  'YTD': [
-    { date: '2026-01-01', value: 175000, label: 'Jan 1' },
-    { date: '2026-01-05', value: 177500, label: 'Jan 5' },
-    { date: '2026-01-08', value: 180000, label: 'Jan 8' },
-    { date: '2026-01-12', value: 184500, label: 'Jan 12' },
-    { date: '2026-01-15', value: 188820.5, label: 'Today' },
-  ],
-};
 
 // Category icons mapping
 const categoryIcons: Record<WalletCategory, React.ReactNode> = {
@@ -137,7 +107,8 @@ const WalletsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [trendPeriod, setTrendPeriod] = useState<'7D' | '30D' | 'YTD'>('7D');
+  const [trendPeriod, setTrendPeriod] = useState<NetWorthPeriod>('7D');
+  const [netWorthHistory, setNetWorthHistory] = useState<NetWorthHistoryResponse | null>(null);
   const [favoritesAnchor, setFavoritesAnchor] = useState<{ el: HTMLElement; category: WalletCategory } | null>(null);
   const [draggedFavoriteId, setDraggedFavoriteId] = useState<string | null>(null);
   const [newWallet, setNewWallet] = useState({
@@ -156,7 +127,6 @@ const WalletsPage = () => {
     const fetchWallets = async () => {
       dispatch(fetchWalletsStart());
       try {
-        await new Promise((resolve) => setTimeout(resolve, 600));
         const data = await walletsService.getWallets();
         setWallets(data);
         dispatch(fetchWalletsSuccess(data)); // Update Redux store for sidebar
@@ -169,6 +139,19 @@ const WalletsPage = () => {
     };
     fetchWallets();
   }, [dispatch]);
+
+  // Fetch net worth history when period changes
+  useEffect(() => {
+    const fetchNetWorthHistory = async () => {
+      try {
+        const data = await dashboardService.getNetWorthHistory(trendPeriod);
+        setNetWorthHistory(data);
+      } catch (error) {
+        console.error('Failed to fetch net worth history:', error);
+      }
+    };
+    fetchNetWorthHistory();
+  }, [trendPeriod]);
 
   const handleCreateWallet = async () => {
     const wallet = await walletsService.createWallet({
@@ -344,14 +327,10 @@ const WalletsPage = () => {
       }));
   }, [walletGroups, totalBalance]);
 
-  // Net worth trend data
-  const trendData = mockNetWorthHistory[trendPeriod];
-  const trendChange = trendData.length >= 2 
-    ? trendData[trendData.length - 1].value - trendData[0].value 
-    : 0;
-  const trendChangePercent = trendData.length >= 2 && trendData[0].value > 0
-    ? ((trendData[trendData.length - 1].value - trendData[0].value) / trendData[0].value) * 100
-    : 0;
+  // Net worth trend data from API
+  const trendData = netWorthHistory?.history ?? [];
+  const trendChange = netWorthHistory?.periodChange ?? 0;
+  const trendChangePercent = netWorthHistory?.periodChangePercent ?? 0;
 
   if (isLoading) {
     return (
@@ -637,7 +616,7 @@ const WalletsPage = () => {
                 />
               </Box>
               <Typography variant="h4" fontWeight={700}>
-                {formatCurrency(trendData[trendData.length - 1].value)}
+                {formatCurrency(trendData.length > 0 ? trendData[trendData.length - 1].value : 0)}
               </Typography>
             </Box>
             <ToggleButtonGroup
@@ -672,6 +651,7 @@ const WalletsPage = () => {
               <ToggleButton value="7D">7D</ToggleButton>
               <ToggleButton value="30D">30D</ToggleButton>
               <ToggleButton value="YTD">YTD</ToggleButton>
+              <ToggleButton value="1Y">1Y</ToggleButton>
             </ToggleButtonGroup>
           </Box>
           
@@ -684,7 +664,7 @@ const WalletsPage = () => {
                   <stop offset="100%" stopColor={alpha(trendChange >= 0 ? theme.palette.success.main : theme.palette.error.main, 0)} />
                 </linearGradient>
               </defs>
-              {(() => {
+              {trendData.length >= 2 && (() => {
                 const min = Math.min(...trendData.map(d => d.value)) * 0.995;
                 const max = Math.max(...trendData.map(d => d.value)) * 1.005;
                 const range = max - min || 1;
