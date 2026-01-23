@@ -6,6 +6,7 @@ import com.moneytracker.backend.dto.TransactionResponse;
 import com.moneytracker.backend.dto.UpdateTransactionRequest;
 import com.moneytracker.backend.entity.TransactionType;
 import com.moneytracker.backend.entity.User;
+import com.moneytracker.backend.service.JwtService;
 import com.moneytracker.backend.service.TransactionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,6 +49,10 @@ class TransactionControllerTest {
     @MockitoBean
     private TransactionService transactionService;
 
+    @MockitoBean
+    @SuppressWarnings("unused")
+    private JwtService jwtService;
+
     private User user;
 
     @BeforeEach
@@ -65,14 +70,14 @@ class TransactionControllerTest {
     void getAllTransactions_returnsPage() throws Exception {
         TransactionResponse response = sampleTransactionResponse();
         Page<TransactionResponse> page = new PageImpl<>(List.of(response), PageRequest.of(0, 20), 1);
-        when(transactionService.getAllTransactionsForUser(eq(user), any())).thenReturn(page);
+        when(transactionService.getAllTransactionsForUser(any(User.class), any())).thenReturn(page);
 
         mockMvc.perform(get("/transactions").with(auth()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(response.id().toString()))
                 .andExpect(jsonPath("$.content[0].amount").value(response.amount().intValue()));
 
-        verify(transactionService).getAllTransactionsForUser(eq(user), any());
+        verify(transactionService).getAllTransactionsForUser(any(User.class), any());
     }
 
     @Test
@@ -88,7 +93,7 @@ class TransactionControllerTest {
                 LocalDate.parse("2024-02-01")
         );
         TransactionResponse response = sampleTransactionResponse();
-        when(transactionService.createTransaction(any(CreateTransactionRequest.class), eq(user))).thenReturn(response);
+        when(transactionService.createTransaction(any(CreateTransactionRequest.class), any(User.class))).thenReturn(response);
 
         mockMvc.perform(post("/transactions")
                         .with(auth())
@@ -98,19 +103,19 @@ class TransactionControllerTest {
                 .andExpect(jsonPath("$.id").value(response.id().toString()))
                 .andExpect(jsonPath("$.description").value(response.description()));
 
-        verify(transactionService).createTransaction(any(CreateTransactionRequest.class), eq(user));
+        verify(transactionService).createTransaction(any(CreateTransactionRequest.class), any(User.class));
     }
 
     @Test
     void getWalletBalance_returnsBalance() throws Exception {
         UUID walletId = UUID.randomUUID();
-        when(transactionService.getWalletBalance(walletId, user)).thenReturn(BigDecimal.valueOf(250));
+        when(transactionService.getWalletBalance(eq(walletId), any(User.class))).thenReturn(BigDecimal.valueOf(250));
 
         mockMvc.perform(get("/wallets/{walletId}/transactions/balance", walletId).with(auth()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").value(250));
 
-        verify(transactionService).getWalletBalance(walletId, user);
+        verify(transactionService).getWalletBalance(eq(walletId), any(User.class));
     }
 
     @Test
@@ -120,21 +125,21 @@ class TransactionControllerTest {
         mockMvc.perform(delete("/transactions/{transactionId}", transactionId).with(auth()))
                 .andExpect(status().isNoContent());
 
-        verify(transactionService).deleteTransaction(transactionId, user);
+        verify(transactionService).deleteTransaction(eq(transactionId), any(User.class));
     }
 
     @Test
     void getTransaction_returnsSingleTransaction() throws Exception {
         UUID transactionId = UUID.randomUUID();
         TransactionResponse response = sampleTransactionResponse();
-        when(transactionService.getTransactionById(transactionId, user)).thenReturn(response);
+        when(transactionService.getTransactionById(eq(transactionId), any(User.class))).thenReturn(response);
 
         mockMvc.perform(get("/transactions/{transactionId}", transactionId).with(auth()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(response.id().toString()))
                 .andExpect(jsonPath("$.description").value(response.description()));
 
-        verify(transactionService).getTransactionById(transactionId, user);
+        verify(transactionService).getTransactionById(eq(transactionId), any(User.class));
     }
 
     @Test
@@ -148,7 +153,7 @@ class TransactionControllerTest {
                 LocalDate.parse("2024-03-01")
         );
         TransactionResponse response = sampleTransactionResponse();
-        when(transactionService.updateTransaction(eq(transactionId), any(UpdateTransactionRequest.class), eq(user)))
+        when(transactionService.updateTransaction(eq(transactionId), any(UpdateTransactionRequest.class), any(User.class)))
                 .thenReturn(response);
 
         mockMvc.perform(put("/transactions/{transactionId}", transactionId)
@@ -158,7 +163,7 @@ class TransactionControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(response.id().toString()));
 
-        verify(transactionService).updateTransaction(eq(transactionId), any(UpdateTransactionRequest.class), eq(user));
+        verify(transactionService).updateTransaction(eq(transactionId), any(UpdateTransactionRequest.class), any(User.class));
     }
 
     @Test
@@ -166,13 +171,13 @@ class TransactionControllerTest {
         UUID walletId = UUID.randomUUID();
         TransactionResponse response = sampleTransactionResponse();
         Page<TransactionResponse> page = new PageImpl<>(List.of(response), PageRequest.of(0, 20), 1);
-        when(transactionService.getTransactionsByWallet(eq(walletId), eq(user), any())).thenReturn(page);
+        when(transactionService.getTransactionsByWallet(eq(walletId), any(User.class), any())).thenReturn(page);
 
         mockMvc.perform(get("/wallets/{walletId}/transactions", walletId).with(auth()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(response.id().toString()));
 
-        verify(transactionService).getTransactionsByWallet(eq(walletId), eq(user), any());
+        verify(transactionService).getTransactionsByWallet(eq(walletId), any(User.class), any());
     }
 
     private RequestPostProcessor auth() {

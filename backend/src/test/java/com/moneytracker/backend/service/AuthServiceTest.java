@@ -28,7 +28,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -111,7 +110,8 @@ class AuthServiceTest {
     void login_validCredentials_returnsTokensAndClearsOldRefreshTokens() {
         LoginRequest request = new LoginRequest("User@Example.com", "Password123");
 
-        doNothing().when(authenticationManager).authenticate(any(Authentication.class));
+        when(authenticationManager.authenticate(any(Authentication.class)))
+                .thenReturn(new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
         when(jwtService.generateAccessToken(user)).thenReturn("access-token");
         when(jwtService.generateRefreshToken(user)).thenReturn("refresh-token");
@@ -137,7 +137,8 @@ class AuthServiceTest {
     void login_missingUser_throwsBadRequest() {
         LoginRequest request = new LoginRequest("user@example.com", "Password123");
 
-        doNothing().when(authenticationManager).authenticate(any(Authentication.class));
+        when(authenticationManager.authenticate(any(Authentication.class)))
+                .thenReturn(new UsernamePasswordAuthenticationToken("user@example.com", "Password123"));
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> authService.login(request))

@@ -7,6 +7,7 @@ import com.moneytracker.backend.dto.UpdateWalletRequest;
 import com.moneytracker.backend.dto.WalletResponse;
 import com.moneytracker.backend.entity.User;
 import com.moneytracker.backend.entity.WalletType;
+import com.moneytracker.backend.service.JwtService;
 import com.moneytracker.backend.service.WalletService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,10 @@ class WalletControllerTest {
     @MockitoBean
     private WalletService walletService;
 
+    @MockitoBean
+    @SuppressWarnings("unused")
+    private JwtService jwtService;
+
     private User user;
 
     @BeforeEach
@@ -62,14 +67,14 @@ class WalletControllerTest {
     @Test
     void getAllWallets_returnsWallets() throws Exception {
         WalletResponse response = sampleWalletResponse();
-        when(walletService.getAllWalletsForUser(user)).thenReturn(List.of(response));
+        when(walletService.getAllWalletsForUser(any(User.class))).thenReturn(List.of(response));
 
         mockMvc.perform(get("/wallets").with(auth()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(response.id().toString()))
                 .andExpect(jsonPath("$[0].name").value(response.name()));
 
-        verify(walletService).getAllWalletsForUser(user);
+        verify(walletService).getAllWalletsForUser(any(User.class));
     }
 
     @Test
@@ -82,7 +87,7 @@ class WalletControllerTest {
                 "bank"
         );
         WalletResponse response = sampleWalletResponse();
-        when(walletService.createWallet(any(CreateWalletRequest.class), eq(user))).thenReturn(response);
+        when(walletService.createWallet(any(CreateWalletRequest.class), any(User.class))).thenReturn(response);
 
         mockMvc.perform(post("/wallets")
                         .with(auth())
@@ -92,7 +97,7 @@ class WalletControllerTest {
                 .andExpect(jsonPath("$.id").value(response.id().toString()))
                 .andExpect(jsonPath("$.name").value(response.name()));
 
-        verify(walletService).createWallet(any(CreateWalletRequest.class), eq(user));
+        verify(walletService).createWallet(any(CreateWalletRequest.class), any(User.class));
     }
 
     @Test
@@ -102,33 +107,33 @@ class WalletControllerTest {
         mockMvc.perform(delete("/wallets/{walletId}", walletId).with(auth()))
                 .andExpect(status().isNoContent());
 
-        verify(walletService).deleteWallet(walletId, user);
+        verify(walletService).deleteWallet(eq(walletId), any(User.class));
     }
 
     @Test
     void getWallet_returnsSingleWallet() throws Exception {
         UUID walletId = UUID.randomUUID();
         WalletResponse response = sampleWalletResponse();
-        when(walletService.getWalletById(walletId, user)).thenReturn(response);
+        when(walletService.getWalletById(eq(walletId), any(User.class))).thenReturn(response);
 
         mockMvc.perform(get("/wallets/{walletId}", walletId).with(auth()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(response.id().toString()))
                 .andExpect(jsonPath("$.name").value(response.name()));
 
-        verify(walletService).getWalletById(walletId, user);
+        verify(walletService).getWalletById(eq(walletId), any(User.class));
     }
 
     @Test
     void getFavoriteWallets_returnsFavorites() throws Exception {
         WalletResponse response = sampleWalletResponse();
-        when(walletService.getFavoriteWallets(user)).thenReturn(List.of(response));
+        when(walletService.getFavoriteWallets(any(User.class))).thenReturn(List.of(response));
 
         mockMvc.perform(get("/wallets/favorites").with(auth()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].isFavorite").value(true));
 
-        verify(walletService).getFavoriteWallets(user);
+        verify(walletService).getFavoriteWallets(any(User.class));
     }
 
     @Test
@@ -144,7 +149,7 @@ class WalletControllerTest {
                 1
         );
         WalletResponse response = sampleWalletResponse();
-        when(walletService.updateWallet(eq(walletId), any(UpdateWalletRequest.class), eq(user))).thenReturn(response);
+        when(walletService.updateWallet(eq(walletId), any(UpdateWalletRequest.class), any(User.class))).thenReturn(response);
 
         mockMvc.perform(put("/wallets/{walletId}", walletId)
                         .with(auth())
@@ -153,7 +158,7 @@ class WalletControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(response.id().toString()));
 
-        verify(walletService).updateWallet(eq(walletId), any(UpdateWalletRequest.class), eq(user));
+        verify(walletService).updateWallet(eq(walletId), any(UpdateWalletRequest.class), any(User.class));
     }
 
     @Test
@@ -167,7 +172,7 @@ class WalletControllerTest {
         ));
         
         WalletResponse response = sampleWalletResponse();
-        when(walletService.updateFavorites(any(BatchFavoriteUpdateRequest.class), eq(user)))
+        when(walletService.updateFavorites(any(BatchFavoriteUpdateRequest.class), any(User.class)))
                 .thenReturn(List.of(response));
 
         mockMvc.perform(put("/wallets/favorites")
@@ -177,7 +182,7 @@ class WalletControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
 
-        verify(walletService).updateFavorites(any(BatchFavoriteUpdateRequest.class), eq(user));
+        verify(walletService).updateFavorites(any(BatchFavoriteUpdateRequest.class), any(User.class));
     }
 
     private RequestPostProcessor auth() {

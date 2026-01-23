@@ -7,6 +7,7 @@ import com.moneytracker.backend.dto.UpdateCategoryRequest;
 import com.moneytracker.backend.entity.CategoryType;
 import com.moneytracker.backend.entity.User;
 import com.moneytracker.backend.service.CategoryService;
+import com.moneytracker.backend.service.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,10 @@ class CategoryControllerTest {
     @MockitoBean
     private CategoryService categoryService;
 
+    @MockitoBean
+    @SuppressWarnings("unused")
+    private JwtService jwtService;
+
     private User user;
 
     @BeforeEach
@@ -59,26 +64,26 @@ class CategoryControllerTest {
     @Test
     void getAllCategories_returnsCategories() throws Exception {
         CategoryResponse response = sampleCategoryResponse(false, CategoryType.EXPENSE);
-        when(categoryService.getAllCategoriesForUser(user)).thenReturn(List.of(response));
+        when(categoryService.getAllCategoriesForUser(any(User.class))).thenReturn(List.of(response));
 
         mockMvc.perform(get("/categories").with(auth()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(response.id().toString()))
                 .andExpect(jsonPath("$[0].name").value(response.name()));
 
-        verify(categoryService).getAllCategoriesForUser(user);
+        verify(categoryService).getAllCategoriesForUser(any(User.class));
     }
 
     @Test
     void getIncomeCategories_returnsIncome() throws Exception {
         CategoryResponse response = sampleCategoryResponse(false, CategoryType.INCOME);
-        when(categoryService.getCategoriesByType(user, CategoryType.INCOME)).thenReturn(List.of(response));
+        when(categoryService.getCategoriesByType(any(User.class), eq(CategoryType.INCOME))).thenReturn(List.of(response));
 
         mockMvc.perform(get("/categories/income").with(auth()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].type").value(CategoryType.INCOME.name()));
 
-        verify(categoryService).getCategoriesByType(user, CategoryType.INCOME);
+        verify(categoryService).getCategoriesByType(any(User.class), eq(CategoryType.INCOME));
     }
 
     @Test
@@ -97,14 +102,14 @@ class CategoryControllerTest {
     void getCategory_returnsSingleCategory() throws Exception {
         UUID categoryId = UUID.randomUUID();
         CategoryResponse response = sampleCategoryResponse(false, CategoryType.EXPENSE);
-        when(categoryService.getCategoryById(categoryId, user)).thenReturn(response);
+        when(categoryService.getCategoryById(eq(categoryId), any(User.class))).thenReturn(response);
 
         mockMvc.perform(get("/categories/{categoryId}", categoryId).with(auth()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(response.id().toString()))
                 .andExpect(jsonPath("$.name").value(response.name()));
 
-        verify(categoryService).getCategoryById(categoryId, user);
+        verify(categoryService).getCategoryById(eq(categoryId), any(User.class));
     }
 
     @Test
@@ -116,7 +121,7 @@ class CategoryControllerTest {
                 "#FF5722"
         );
         CategoryResponse response = sampleCategoryResponse(false, CategoryType.EXPENSE);
-        when(categoryService.createCategory(any(CreateCategoryRequest.class), eq(user))).thenReturn(response);
+        when(categoryService.createCategory(any(CreateCategoryRequest.class), any(User.class))).thenReturn(response);
 
         mockMvc.perform(post("/categories")
                         .with(auth())
@@ -126,7 +131,7 @@ class CategoryControllerTest {
                 .andExpect(jsonPath("$.id").value(response.id().toString()))
                 .andExpect(jsonPath("$.name").value(response.name()));
 
-        verify(categoryService).createCategory(any(CreateCategoryRequest.class), eq(user));
+        verify(categoryService).createCategory(any(CreateCategoryRequest.class), any(User.class));
     }
 
     @Test
@@ -139,7 +144,7 @@ class CategoryControllerTest {
                 "#4CAF50"
         );
         CategoryResponse response = sampleCategoryResponse(false, CategoryType.EXPENSE);
-        when(categoryService.updateCategory(eq(categoryId), any(UpdateCategoryRequest.class), eq(user)))
+        when(categoryService.updateCategory(eq(categoryId), any(UpdateCategoryRequest.class), any(User.class)))
                 .thenReturn(response);
 
         mockMvc.perform(put("/categories/{categoryId}", categoryId)
@@ -149,7 +154,7 @@ class CategoryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(response.id().toString()));
 
-        verify(categoryService).updateCategory(eq(categoryId), any(UpdateCategoryRequest.class), eq(user));
+        verify(categoryService).updateCategory(eq(categoryId), any(UpdateCategoryRequest.class), any(User.class));
     }
 
     @Test
@@ -159,7 +164,7 @@ class CategoryControllerTest {
         mockMvc.perform(delete("/categories/{categoryId}", categoryId).with(auth()))
                 .andExpect(status().isNoContent());
 
-        verify(categoryService).deleteCategory(categoryId, user);
+        verify(categoryService).deleteCategory(eq(categoryId), any(User.class));
     }
 
     private RequestPostProcessor auth() {

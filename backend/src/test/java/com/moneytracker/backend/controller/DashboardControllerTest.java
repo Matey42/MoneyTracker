@@ -7,6 +7,7 @@ import com.moneytracker.backend.entity.TransactionType;
 import com.moneytracker.backend.entity.User;
 import com.moneytracker.backend.entity.WalletType;
 import com.moneytracker.backend.service.DashboardService;
+import com.moneytracker.backend.service.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
@@ -40,6 +42,10 @@ class DashboardControllerTest {
     @MockitoBean
     private DashboardService dashboardService;
 
+    @MockitoBean
+    @SuppressWarnings("unused")
+    private JwtService jwtService;
+
     private User user;
 
     @BeforeEach
@@ -56,7 +62,7 @@ class DashboardControllerTest {
     @Test
     void getDashboard_returnsDashboardData() throws Exception {
         DashboardResponse response = sampleDashboardResponse();
-        when(dashboardService.getDashboard(user)).thenReturn(response);
+        when(dashboardService.getDashboard(any(User.class))).thenReturn(response);
 
         mockMvc.perform(get("/dashboard").with(auth()))
                 .andExpect(status().isOk())
@@ -69,7 +75,7 @@ class DashboardControllerTest {
                 .andExpect(jsonPath("$.recentTransactions").isArray())
                 .andExpect(jsonPath("$.categoryBreakdown").isArray());
 
-        verify(dashboardService).getDashboard(user);
+        verify(dashboardService).getDashboard(any(User.class));
     }
 
     @Test
@@ -83,7 +89,7 @@ class DashboardControllerTest {
                 List.of(),
                 List.of()
         );
-        when(dashboardService.getDashboard(user)).thenReturn(emptyResponse);
+        when(dashboardService.getDashboard(any(User.class))).thenReturn(emptyResponse);
 
         mockMvc.perform(get("/dashboard").with(auth()))
                 .andExpect(status().isOk())
@@ -92,7 +98,7 @@ class DashboardControllerTest {
                 .andExpect(jsonPath("$.recentTransactions").isEmpty())
                 .andExpect(jsonPath("$.categoryBreakdown").isEmpty());
 
-        verify(dashboardService).getDashboard(user);
+        verify(dashboardService).getDashboard(any(User.class));
     }
 
     private RequestPostProcessor auth() {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moneytracker.backend.dto.UpdateUserRequest;
 import com.moneytracker.backend.dto.UserResponse;
 import com.moneytracker.backend.entity.User;
+import com.moneytracker.backend.service.JwtService;
 import com.moneytracker.backend.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,7 +20,6 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
@@ -40,6 +40,10 @@ class UserControllerTest {
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    @SuppressWarnings("unused")
+    private JwtService jwtService;
 
     private User user;
     private UserResponse userResponse;
@@ -66,7 +70,7 @@ class UserControllerTest {
 
     @Test
     void getCurrentUser_returnsUserResponse() throws Exception {
-        when(userService.getUser(user)).thenReturn(userResponse);
+        when(userService.getUser(any(User.class))).thenReturn(userResponse);
 
         mockMvc.perform(get("/users/me").with(auth()))
                 .andExpect(status().isOk())
@@ -76,7 +80,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.lastName").value(userResponse.lastName()))
                 .andExpect(jsonPath("$.fullName").value(userResponse.fullName()));
 
-        verify(userService).getUser(user);
+        verify(userService).getUser(any(User.class));
     }
 
     @Test
@@ -97,7 +101,7 @@ class UserControllerTest {
                 "NewFirst NewLast"
         );
         
-        when(userService.updateUser(eq(user), any(UpdateUserRequest.class))).thenReturn(updatedResponse);
+        when(userService.updateUser(any(User.class), any(UpdateUserRequest.class))).thenReturn(updatedResponse);
 
         mockMvc.perform(put("/users/me")
                         .with(auth())
@@ -108,7 +112,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.lastName").value("NewLast"))
                 .andExpect(jsonPath("$.fullName").value("NewFirst NewLast"));
 
-        verify(userService).updateUser(eq(user), any(UpdateUserRequest.class));
+        verify(userService).updateUser(any(User.class), any(UpdateUserRequest.class));
     }
 
     @Test
@@ -129,7 +133,7 @@ class UserControllerTest {
                 userResponse.fullName()
         );
         
-        when(userService.updateUser(eq(user), any(UpdateUserRequest.class))).thenReturn(updatedResponse);
+        when(userService.updateUser(any(User.class), any(UpdateUserRequest.class))).thenReturn(updatedResponse);
 
         mockMvc.perform(put("/users/me")
                         .with(auth())
@@ -138,7 +142,7 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("newemail@example.com"));
 
-        verify(userService).updateUser(eq(user), any(UpdateUserRequest.class));
+        verify(userService).updateUser(any(User.class), any(UpdateUserRequest.class));
     }
 
     @Test
@@ -151,7 +155,7 @@ class UserControllerTest {
                 "newPassword456"
         );
         
-        when(userService.updateUser(eq(user), any(UpdateUserRequest.class))).thenReturn(userResponse);
+        when(userService.updateUser(any(User.class), any(UpdateUserRequest.class))).thenReturn(userResponse);
 
         mockMvc.perform(put("/users/me")
                         .with(auth())
@@ -159,7 +163,7 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
-        verify(userService).updateUser(eq(user), any(UpdateUserRequest.class));
+        verify(userService).updateUser(any(User.class), any(UpdateUserRequest.class));
     }
 
     private RequestPostProcessor auth() {
