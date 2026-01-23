@@ -2,6 +2,7 @@ package com.moneytracker.backend.service;
 
 import com.moneytracker.backend.dto.CreateTransactionRequest;
 import com.moneytracker.backend.dto.TransactionResponse;
+import com.moneytracker.backend.dto.UpdateTransactionRequest;
 import com.moneytracker.backend.entity.*;
 import com.moneytracker.backend.exception.ResourceNotFoundException;
 import com.moneytracker.backend.repository.CategoryRepository;
@@ -118,6 +119,52 @@ public class TransactionService {
         }
 
         transaction = transactionRepository.save(transaction);
+        return TransactionResponse.from(transaction);
+    }
+    
+    public TransactionResponse updateTransaction(UUID transactionId, UpdateTransactionRequest request, User user) {
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+        
+        if (!hasWriteAccess(transaction.getWallet(), user)) {
+            throw new AccessDeniedException("You don't have permission to update this transaction");
+        }
+        
+        // Cannot update transfer transactions (would break linked transactions)
+        if (transaction.getType() == TransactionType.TRANSFER) {
+            throw new AccessDeniedException("Cannot update transfer transactions");
+        }
+        
+        if (request.type() != null && request.type() != TransactionType.TRANSFER) {
+            transaction.setType(request.type());
+        }
+        if (request.amount() != null) {
+            transaction.setAmount(request.amount());
+        }
+        if (request.description() != null) {
+            transaction.setDescription(request.description());
+        }
+        if (request.transactionDate() != null) {
+            transaction.setTransactionDate(request.transactionDate());
+        }
+        if (request.categoryId() != null) {
+            Category category = categoryRepository.findById(request.categoryId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+            transaction.setCategory(category);
+        }
+        
+        transaction = transactionRepository.save(transaction);
+        return TransactionResponse.from(transaction);
+    }
+    
+    public TransactionResponse getTransactionById(UUID transactionId, User user) {
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+        
+        if (!hasAccess(transaction.getWallet(), user)) {
+            throw new AccessDeniedException("You don't have access to this transaction");
+        }
+        
         return TransactionResponse.from(transaction);
     }
 

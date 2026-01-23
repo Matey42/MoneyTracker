@@ -1,5 +1,6 @@
 package com.moneytracker.backend.service;
 
+import com.moneytracker.backend.dto.BatchFavoriteUpdateRequest;
 import com.moneytracker.backend.dto.CreateWalletRequest;
 import com.moneytracker.backend.dto.UpdateWalletRequest;
 import com.moneytracker.backend.dto.WalletResponse;
@@ -123,6 +124,23 @@ public class WalletService {
         }
 
         walletRepository.delete(wallet);
+    }
+    
+    public List<WalletResponse> updateFavorites(BatchFavoriteUpdateRequest request, User user) {
+        for (BatchFavoriteUpdateRequest.FavoriteItem item : request.favorites()) {
+            Wallet wallet = walletRepository.findById(item.walletId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Wallet not found: " + item.walletId()));
+            
+            if (!isOwner(wallet, user)) {
+                throw new AccessDeniedException("Only the owner can update favorite status");
+            }
+            
+            wallet.setIsFavorite(item.isFavorite());
+            wallet.setFavoriteOrder(item.favoriteOrder());
+            walletRepository.save(wallet);
+        }
+        
+        return getFavoriteWallets(user);
     }
 
     private WalletResponse toResponse(Wallet wallet, User user) {
