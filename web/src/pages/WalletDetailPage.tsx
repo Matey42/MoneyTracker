@@ -47,6 +47,7 @@ import {
   CurrencyBitcoin as CryptoIcon,
   Home as RealEstateIcon,
   MoreHoriz as OtherIcon,
+  CheckCircle as SuccessIcon,
 } from '@mui/icons-material';
 import type { Wallet, WalletCategory, Transaction, TransactionType, Category } from '../types';
 import { formatCurrency, formatDate } from '../utils/formatters';
@@ -107,6 +108,8 @@ const WalletDetailPage = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [transferSuccessOpen, setTransferSuccessOpen] = useState(false);
+  const [transferredToWallet, setTransferredToWallet] = useState<{ id: string; name: string } | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     name: '',
@@ -263,18 +266,32 @@ const WalletDetailPage = () => {
   const handleTransfer = async () => {
     if (!wallet || !transferTargetId) return;
     
+    const targetWallet = allWallets.find((w) => w.id === transferTargetId);
+    if (!targetWallet) return;
+    
     // Transfer all transactions to target wallet and delete source wallet
     await walletsService.transferWallet(wallet.id, transferTargetId);
     await refreshWallets();
-    navigate(`/wallets/${transferTargetId}`, {
-      state: navState?.from === 'category'
-        ? {
-            from: 'category',
-            categoryPath: navState.categoryPath,
-            categoryLabel: navState.categoryLabel,
-          }
-        : { from: 'wallets' },
-    });
+    
+    // Show success confirmation
+    setTransferredToWallet({ id: targetWallet.id, name: targetWallet.name });
+    setTransferDialogOpen(false);
+    setTransferSuccessOpen(true);
+  };
+
+  const handleTransferSuccessClose = () => {
+    setTransferSuccessOpen(false);
+    if (transferredToWallet) {
+      navigate(`/wallets/${transferredToWallet.id}`, {
+        state: navState?.from === 'category'
+          ? {
+              from: 'category',
+              categoryPath: navState.categoryPath,
+              categoryLabel: navState.categoryLabel,
+            }
+          : { from: 'wallets' },
+      });
+    }
   };
 
   const handleDeleteWallet = async () => {
@@ -934,6 +951,50 @@ const WalletDetailPage = () => {
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
           <Button color="error" variant="contained" onClick={handleDeleteWallet}>
             Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Transfer Success Dialog */}
+      <Dialog 
+        open={transferSuccessOpen} 
+        onClose={handleTransferSuccessClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogContent sx={{ textAlign: 'center', py: 4 }}>
+          <Avatar 
+            sx={{ 
+              width: 64, 
+              height: 64, 
+              bgcolor: 'success.main', 
+              mx: 'auto', 
+              mb: 2 
+            }}
+          >
+            <SuccessIcon sx={{ fontSize: 40 }} />
+          </Avatar>
+          <Typography variant="h5" fontWeight={600} gutterBottom>
+            Transfer Complete!
+          </Typography>
+          <Typography color="text.secondary" sx={{ mb: 1 }}>
+            All {transactions.length} transaction{transactions.length !== 1 ? 's' : ''} from "{wallet?.name}" 
+            {transactions.length > 0 ? ' have' : ' has'} been moved to:
+          </Typography>
+          <Typography variant="h6" color="primary" fontWeight={600}>
+            {transferredToWallet?.name}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            The wallet "{wallet?.name}" has been deleted.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+          <Button 
+            variant="contained" 
+            onClick={handleTransferSuccessClose}
+            size="large"
+          >
+            Go to {transferredToWallet?.name}
           </Button>
         </DialogActions>
       </Dialog>
