@@ -262,21 +262,11 @@ const WalletDetailPage = () => {
 
   const handleTransfer = async () => {
     if (!wallet || !transferTargetId) return;
-    const target = allWallets.find((item) => item.id === transferTargetId);
-    if (!target) return;
     
-    // Create a transfer transaction to move funds to target wallet
-    await transactionsService.createTransaction({
-      walletId: wallet.id,
-      type: 'TRANSFER',
-      amount: wallet.balance,
-      targetWalletId: target.id,
-      description: `Transfer to ${target.name}`,
-    });
-    
-    await walletsService.deleteWallet(wallet.id);
+    // Transfer all transactions to target wallet and delete source wallet
+    await walletsService.transferWallet(wallet.id, transferTargetId);
     await refreshWallets();
-    navigate(`/wallets/${target.id}`, {
+    navigate(`/wallets/${transferTargetId}`, {
       state: navState?.from === 'category'
         ? {
             from: 'category',
@@ -864,7 +854,7 @@ const WalletDetailPage = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Transfer Wallet Balance</DialogTitle>
+        <DialogTitle>Transfer Wallet</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, mb: 2 }}>
             <Avatar sx={{ bgcolor: alpha(headerBaseColor, 0.15), color: headerBaseColor }}>
@@ -872,16 +862,16 @@ const WalletDetailPage = () => {
             </Avatar>
             <Box>
               <Typography variant="subtitle1" fontWeight={600}>
-                Move balance to another {getWalletLabel(wallet.type)} wallet
+                Move all transactions to another {getWalletLabel(wallet.type)} wallet
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                The current wallet will be deleted after the transfer.
+                All transactions will be moved and this wallet will be deleted.
               </Typography>
             </Box>
           </Box>
 
           <Alert severity="warning" sx={{ mb: 2 }}>
-            This action will delete "{wallet.name}" after transferring its balance.
+            This action will move {transactions.length} transaction{transactions.length !== 1 ? 's' : ''} from "{wallet.name}" and delete the wallet.
           </Alert>
 
           <FormControl fullWidth sx={{ mb: 2 }}>
@@ -915,7 +905,7 @@ const WalletDetailPage = () => {
 
           <TextField
             fullWidth
-            label="Transfer Amount"
+            label="Current Balance (will be added to target)"
             value={formatCurrency(wallet.balance, wallet.currency)}
             InputProps={{ readOnly: true }}
           />

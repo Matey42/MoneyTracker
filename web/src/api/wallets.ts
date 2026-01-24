@@ -100,4 +100,18 @@ export const walletsService = {
       authToken: tokenStorage.getAccessToken(),
     });
   },
+
+  transferWallet: async (sourceWalletId: string, targetWalletId: string): Promise<Wallet> => {
+    if (!isWalletsApiEnabled) {
+      const target = mockWallets.find((w) => w.id === targetWalletId);
+      if (!target) throw new Error('Target wallet not found');
+      return target;
+    }
+
+    return request<Wallet>(`/wallets/${sourceWalletId}/transfer`, {
+      method: 'POST',
+      body: { targetWalletId },
+      authToken: tokenStorage.getAccessToken(),
+    });
+  },
 };
