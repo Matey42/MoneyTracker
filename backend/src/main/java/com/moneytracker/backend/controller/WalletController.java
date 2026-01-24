@@ -2,6 +2,7 @@ package com.moneytracker.backend.controller;
 
 import com.moneytracker.backend.dto.BatchFavoriteUpdateRequest;
 import com.moneytracker.backend.dto.CreateWalletRequest;
+import com.moneytracker.backend.dto.TransferWalletRequest;
 import com.moneytracker.backend.dto.UpdateWalletRequest;
 import com.moneytracker.backend.dto.WalletResponse;
 import com.moneytracker.backend.entity.User;
@@ -71,5 +72,13 @@ public class WalletController {
                                               @AuthenticationPrincipal User user) {
         walletService.deleteWallet(walletId, user);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{walletId}/transfer")
+    public ResponseEntity<WalletResponse> transferWallet(@PathVariable UUID walletId,
+                                                          @Valid @RequestBody TransferWalletRequest request,
+                                                          @AuthenticationPrincipal User user) {
+        WalletResponse targetWallet = walletService.transferWallet(walletId, request.targetWalletId(), user);
+        return ResponseEntity.ok(targetWallet);
     }
 }

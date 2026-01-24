@@ -125,6 +125,45 @@ public class WalletService {
 
         walletRepository.delete(wallet);
     }
+
+    public WalletResponse transferWallet(UUID sourceWalletId, UUID targetWalletId, User user) {
+        Wallet sourceWallet = walletRepository.findById(sourceWalletId)
+                .orElseThrow(() -> new ResourceNotFoundException("Source wallet not found"));
+
+        Wallet targetWallet = walletRepository.findById(targetWalletId)
+                .orElseThrow(() -> new ResourceNotFoundException("Target wallet not found"));
+
+        if (!isOwner(sourceWallet, user)) {
+            throw new AccessDeniedException("Only the owner can transfer this wallet");
+        }
+
+        if (!isOwner(targetWallet, user)) {
+            throw new AccessDeniedException("You don't have access to the target wallet");
+        }
+
+        if (sourceWalletId.equals(targetWalletId)) {
+            throw new IllegalArgumentException("Cannot transfer wallet to itself");
+        }
+
+        // Move all transactions from source to target wallet
+        List<Transaction> transactions = transactionRepository.findByWalletId(sourceWalletId);
+        for (Transaction transaction : transactions) {
+            transaction.setWallet(targetWallet);
+        }
+        transactionRepository.saveAll(transactions);
+
+        // Update any transactions that reference this wallet as a related/target wallet
+        List<Transaction> relatedTransactions = transactionRepository.findByRelatedWalletId(sourceWalletId);
+        for (Transaction transaction : relatedTransactions) {
+            transaction.setRelatedWallet(targetWallet);
+        }
+        transactionRepository.saveAll(relatedTransactions);
+
+        // Delete the source wallet (cascades to wallet members)
+        walletRepository.delete(sourceWallet);
+
+        return toResponse(targetWallet, user);
+    }
     
     public List<WalletResponse> updateFavorites(BatchFavoriteUpdateRequest request, User user) {
         for (BatchFavoriteUpdateRequest.FavoriteItem item : request.favorites()) {

@@ -16,6 +16,10 @@ import java.util.UUID;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
     
+    List<Transaction> findByWalletId(UUID walletId);
+    
+    List<Transaction> findByRelatedWalletId(UUID relatedWalletId);
+    
     Page<Transaction> findByWalletIdOrderByTransactionDateDesc(UUID walletId, Pageable pageable);
     
     List<Transaction> findByWalletIdAndTransactionDateBetween(UUID walletId, LocalDate start, LocalDate end);
