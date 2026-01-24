@@ -15,14 +15,14 @@ docker compose up -d --build
 
 ```bash
 # Base compose only (prod-like)
-docker compose -f docker-compose.yml up --build
+docker compose -f docker-compose.yml up -d --build
 ```
 
 ### Local backend + Docker Postgres
 
 ```bash
 # Start Postgres only (option A)
-docker compose up postgres
+docker compose up -d --build postgres
 
 # Start Postgres only (option B, use 5433 to avoid conflicts)
 docker run --name moneytracker-db \
