@@ -1,0 +1,60 @@
+@startuml Liability_UseCase
+
+left to right direction
+skinparam backgroundColor #FAFAFA
+skinparam shadowing false
+
+skinparam actor {
+    BackgroundColor #4A90D9
+    BorderColor #2E6BAD
+    FontColor #333333
+    FontSize 14
+}
+
+skinparam usecase {
+    BackgroundColor #E8F4FD
+    BorderColor #4A90D9
+    FontColor #333333
+    FontSize 12
+    BorderThickness 1.5
+}
+
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #4A90D9
+    BorderThickness 2
+    RoundCorner 10
+}
+
+skinparam arrow {
+    Color #666666
+    FontColor #666666
+}
+
+actor "User" as User
+
+rectangle "Liability Management" {
+    usecase "Create Liability" as UC_Create
+    usecase "View Liabilities" as UC_View
+    usecase "Update Liability" as UC_Update
+    usecase "Pay Liability" as UC_Pay
+    usecase "Delete Liability" as UC_Delete
+}
+
+User --> UC_Create
+User --> UC_View
+User --> UC_Update
+User --> UC_Pay
+User --> UC_Delete
+
+note right of UC_Pay
+  Creates expense transaction
+  Reduces liability balance
+end note
+
+note right of UC_Create
+  Loan, Credit Card,
+  Mortgage, Personal Debt
+end note
+
+@enduml

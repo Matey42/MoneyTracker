@@ -1,0 +1,58 @@
+@startuml Dashboard_UseCase
+
+left to right direction
+skinparam backgroundColor #FAFAFA
+skinparam shadowing false
+
+skinparam actor {
+    BackgroundColor #4A90D9
+    BorderColor #2E6BAD
+    FontColor #333333
+    FontSize 14
+}
+
+skinparam usecase {
+    BackgroundColor #E8F4FD
+    BorderColor #4A90D9
+    FontColor #333333
+    FontSize 12
+    BorderThickness 1.5
+}
+
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #4A90D9
+    BorderThickness 2
+    RoundCorner 10
+}
+
+skinparam arrow {
+    Color #666666
+    FontColor #666666
+}
+
+actor "User" as User
+
+rectangle "Dashboard" {
+    usecase "View Dashboard" as UC_Dashboard
+    
+    ' Wewnętrzne/systemowe przypadki użycia (zmieniono kolor dla lepszej wizualnej separacji)
+    usecase "Load Wallets" as UC_LoadWallets #D4EDDA
+    usecase "Load Recent Transactions" as UC_LoadTrans #D4EDDA
+    usecase "Calculate Monthly Summary" as UC_Summary #D4EDDA
+    usecase "Calculate Category Breakdown" as UC_Categories #D4EDDA
+    usecase "Display Charts" as UC_Charts #D4EDDA
+}
+
+' 1. Asocjacja Aktora
+User --> UC_Dashboard
+
+' 2. Relacje Włączenia (<<include>>)
+' Wszystkie te funkcjonalności są wymagane do wyświetlenia panelu
+UC_Dashboard ..> UC_LoadWallets : <<include>>
+UC_Dashboard ..> UC_LoadTrans : <<include>>
+UC_Dashboard ..> UC_Summary : <<include>>
+UC_Dashboard ..> UC_Categories : <<include>>
+UC_Dashboard ..> UC_Charts : <<include>>
+
+@enduml

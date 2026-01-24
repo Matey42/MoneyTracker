@@ -1,0 +1,70 @@
+@startuml Authentication_UseCase
+
+left to right direction
+skinparam backgroundColor #FAFAFA
+skinparam shadowing false
+
+skinparam actor {
+    BackgroundColor #4A90D9
+    BorderColor #2E6BAD
+    FontColor #333333
+    FontSize 14
+}
+
+' Użycie koloru #E8F4FD dla przypadków użycia inicjowanych przez aktora
+skinparam usecase {
+    BackgroundColor #E8F4FD
+    BorderColor #4A90D9
+    FontColor #333333
+    FontSize 12
+    BorderThickness 1.5
+}
+
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #4A90D9
+    BorderThickness 2
+    RoundCorner 10
+}
+
+skinparam arrow {
+    Color #666666
+    FontColor #666666
+}
+
+actor "Guest" as Guest
+actor "User" as User
+
+' Przypadki użycia są zgrupowane w ramach podsystemu
+rectangle "Authentication" {
+    usecase "Register" as UC_Register
+    usecase "Login" as UC_Login
+    usecase "Logout" as UC_Logout
+    usecase "Refresh Token" as UC_Refresh
+
+    ' Przypadki użycia wewnętrzne (wywoływane przez <<include>>) - ZMIANA KOLORU
+    usecase "Generate Access Token" as UC_GenAccess #D4EDDA
+    usecase "Generate Refresh Token" as UC_GenRefresh #D4EDDA
+    usecase "Create Default Wallet" as UC_DefaultWallet #D4EDDA
+}
+
+' 1. Asocjacje Aktora
+Guest --> UC_Register
+Guest --> UC_Login
+
+User --> UC_Logout
+User --> UC_Refresh
+
+' **2. Relacje Włączenia (<<include>>) - Kluczowe dla logiki**
+' Logowanie wymaga wygenerowania obu tokenów
+UC_Login ..> UC_GenAccess : <<include>>
+UC_Login ..> UC_GenRefresh : <<include>>
+
+' Rejestracja wymaga utworzenia portfela i wygenerowania tokena dostępowego (auto-login)
+UC_Register ..> UC_DefaultWallet : <<include>>
+UC_Register ..> UC_GenAccess : <<include>>
+
+' Odświeżanie tokena wymaga wygenerowania nowego tokena dostępowego
+UC_Refresh ..> UC_GenAccess : <<include>>
+
+@enduml

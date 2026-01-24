@@ -1,0 +1,110 @@
+@startuml Overview_UseCase
+
+left to right direction
+skinparam backgroundColor #FAFAFA
+skinparam shadowing false
+
+skinparam actor {
+    BackgroundColor #4A90D9
+    BorderColor #2E6BAD
+    FontColor #333333
+    FontSize 13
+}
+
+skinparam usecase {
+    BackgroundColor #E8F4FD
+    BorderColor #4A90D9
+    FontColor #333333
+    FontSize 11
+    BorderThickness 1.5
+}
+
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #4A90D9
+    BorderThickness 2
+    RoundCorner 10
+}
+
+skinparam package {
+    BackgroundColor #F5F5F5
+    BorderColor #BDBDBD
+    FontColor #333333
+}
+
+skinparam arrow {
+    Color #666666
+    FontColor #666666
+}
+
+actor "Guest" as Guest
+actor "User" as User
+actor #9C27B0 "Owner" as Owner
+
+' 1. ACTOR GENERALIZATION: Owner inherits all User features
+User <|-- Owner 
+
+rectangle "System Overview" {
+    
+    package "1. Authentication" {
+        usecase "Register" as UC_Register
+        usecase "Login" as UC_Login
+        usecase "Logout" as UC_Logout
+        usecase "Refresh Token" as UC_Refresh
+    }
+    
+    package "2. Wallet Management" {
+        usecase "Create Wallet" as UC_CreateWallet
+        usecase "View Wallet Details" as UC_ViewWallet
+        usecase "Leave Wallet" as UC_LeaveWallet
+        usecase "Delete Wallet" as UC_DeleteWallet #F3E5F5
+    }
+    
+    package "3. Member Management" {
+        usecase "Add Member" as UC_AddMember
+        usecase "Remove Member" as UC_RemoveMember #F3E5F5
+    }
+    
+    package "4. Transaction Management" {
+        usecase "Create Transaction" as UC_CreateTrans
+        usecase "Update Transaction" as UC_UpdateTrans
+    }
+    
+    package "5. Dashboard" {
+        usecase "View Dashboard" as UC_Dashboard
+    }
+}
+
+' 2. ASSOCIATIONS
+
+' Guest access
+Guest --> UC_Register
+Guest --> UC_Login
+
+' User (Member) access - Owner inherits these
+User --> UC_Logout
+User --> UC_Refresh
+User --> UC_CreateWallet
+User --> UC_ViewWallet
+User --> UC_LeaveWallet
+User --> UC_AddMember
+User --> UC_CreateTrans
+User --> UC_UpdateTrans
+User --> UC_Dashboard
+
+' Owner-specific privileges (Override/Additional)
+Owner --> UC_RemoveMember
+Owner --> UC_DeleteWallet
+
+' 3. NOTES (Explaining conditional actions/privilege differences)
+note right of UC_LeaveWallet
+  Member: loses access
+  Owner: (Conditional) wallet is deleted
+end note
+
+note right of UC_UpdateTrans
+  User: can edit own transactions
+  Owner: can edit any transaction
+end note
+
+@enduml

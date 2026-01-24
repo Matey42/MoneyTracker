@@ -1,0 +1,63 @@
+@startuml Transaction_UseCase
+
+left to right direction
+skinparam backgroundColor #FAFAFA
+skinparam shadowing false
+
+skinparam actor {
+    BackgroundColor #4A90D9
+    BorderColor #2E6BAD
+    FontColor #333333
+    FontSize 14
+}
+
+skinparam usecase {
+    BackgroundColor #E8F4FD
+    BorderColor #4A90D9
+    FontColor #333333
+    FontSize 12
+    BorderThickness 1.5
+}
+
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #4A90D9
+    BorderThickness 2
+    RoundCorner 10
+}
+
+skinparam arrow {
+    Color #666666
+    FontColor #666666
+}
+
+actor "User" as User
+
+rectangle "Transaction Management" {
+    usecase "Create Transaction" as UC_Create
+    usecase "Update Transaction" as UC_Update
+    
+    ' Internal/System Use Cases
+    usecase "Select Wallet" as UC_SelectWallet #D4EDDA
+    usecase "Select Category" as UC_SelectCategory #D4EDDA
+    usecase "Enter Amount" as UC_Amount #D4EDDA
+    usecase "Verify Access" as UC_VerifyAccess #D4EDDA
+    usecase "Update Balance" as UC_UpdateBalance #D4EDDA
+}
+
+' ASSOCIATIONS
+User --> UC_Create
+User --> UC_Update
+
+' RELATIONSHIPS (<<include>>) - Internal dependencies
+
+UC_Create ..> UC_SelectWallet : <<include>>
+UC_Create ..> UC_SelectCategory : <<include>>
+UC_Create ..> UC_Amount : <<include>>
+UC_Create ..> UC_VerifyAccess : <<include>>
+UC_Create ..> UC_UpdateBalance : <<include>>
+
+UC_Update ..> UC_VerifyAccess : <<include>>
+UC_Update ..> UC_UpdateBalance : <<include>>
+
+@enduml

@@ -1,0 +1,69 @@
+@startuml Wallet_UseCase
+
+left to right direction
+skinparam backgroundColor #FAFAFA
+skinparam shadowing false
+
+skinparam actor {
+    BackgroundColor #4A90D9
+    BorderColor #2E6BAD
+    FontColor #333333
+    FontSize 14
+}
+
+skinparam usecase {
+    BackgroundColor #E8F4FD
+    BorderColor #4A90D9
+    FontColor #333333
+    FontSize 12
+    BorderThickness 1.5
+}
+
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #4A90D9
+    BorderThickness 2
+    RoundCorner 10
+}
+
+skinparam arrow {
+    Color #666666
+    FontColor #666666
+}
+
+actor "User" as User
+actor #9C27B0 "Owner" as Owner
+
+User <|-- Owner : extends
+
+rectangle "Wallet Management" {
+    usecase "Create Wallet" as UC_Create
+    usecase "View Wallet Details" as UC_View
+    usecase "Leave Wallet" as UC_Leave
+    usecase "Add Member" as UC_AddMember
+    usecase "Remove Member" as UC_Remove
+    usecase "Remove User Access" as UC_RemoveAccess #D4EDDA
+    usecase "Delete Wallet Data" as UC_DeleteData #D4EDDA
+    usecase "Calculate Balance" as UC_Balance #D4EDDA
+    usecase "Load Transactions" as UC_LoadTrans #D4EDDA
+    usecase "Load Members" as UC_LoadMembers #D4EDDA
+}
+
+User --> UC_Create
+User --> UC_View
+User --> UC_Leave
+User --> UC_AddMember
+
+Owner --> UC_Remove
+Owner --> UC_DeleteData
+
+UC_Create ..> UC_AddMember : <<include>>
+UC_View ..> UC_Balance : <<include>>
+UC_View ..> UC_LoadTrans : <<include>>
+UC_View ..> UC_LoadMembers : <<include>>
+
+UC_Leave ..> UC_RemoveAccess : <<include>>
+UC_Remove ..> UC_RemoveAccess : <<include>>
+UC_DeleteData ..> UC_RemoveAccess : <<include>>
+
+@enduml
