@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -23,6 +24,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+
+    private static final List<String> PUBLIC_PATHS = List.of(
+            "/auth/register",
+            "/auth/login",
+            "/auth/refresh",
+            "/health"
+    );
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        // Skip filter for OPTIONS requests (CORS preflight)
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+        // Skip filter for public endpoints
+        return PUBLIC_PATHS.stream().anyMatch(path::startsWith);
+    }
 
     @Override
     protected void doFilterInternal(
@@ -54,6 +73,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         } catch (Exception e) {
             logger.debug("JWT validation failed: " + e.getMessage());
+            // Clear any partial authentication context
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
