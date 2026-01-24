@@ -1,58 +1,110 @@
 # MoneyTracker - Personal Finance Management
 
-A comprehensive personal finance management application for tracking income, expenses, liabilities, and cash flow.
+A personal finance management application for tracking wallets, transactions, and categories.
+
+## 🚦 Quick Start
+
+### Docker (development)
+
+```bash
+# Dev stack (auto-includes docker-compose.override.yml)
+docker compose up -d --build
+```
+
+### Docker (production-like)
+
+```bash
+# Base compose only (prod-like)
+docker compose -f docker-compose.yml up --build
+```
+
+### Local backend + Docker Postgres
+
+```bash
+# Start Postgres only (option A)
+docker compose up -d --build postgres
+
+# Start Postgres only (option B, use 5433 to avoid conflicts)
+docker run --name moneytracker-db \
+  -e POSTGRES_DB=moneytracker \
+  -e POSTGRES_USER=moneytracker \
+  -e POSTGRES_PASSWORD=localdev123 \
+  -p 5433:5432 \
+  -d postgres:16-alpine
+
+# Run backend (CLI)
+cd backend
+./mvnw spring-boot:run
+```
+
+If you use the 5433 mapping above, set:
+
+```
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/moneytracker
+SPRING_DATASOURCE_USERNAME=moneytracker
+SPRING_DATASOURCE_PASSWORD=localdev123
+```
+
+You can also run the backend from IntelliJ using the Spring Boot run configuration.
+
+### Local frontend
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+See `web/.env.example` for API mode switches (mock/api/hybrid).
 
 ## 🎯 Project Overview
 
-MoneyTracker is a modern, full-stack web application designed to help users take control of their personal finances. The application provides intuitive tools for recording financial transactions, categorizing expenses, and visualizing spending patterns.
+MoneyTracker is a modern full-stack web app designed to help users track finances with a clear dashboard, wallet categories, and transaction history.
 
 ## 🚀 Current Phase: MVP (Budgeting Core)
 
 ### Features
 
 #### Transaction Management
-- **Income Tracking**: Record salary, freelance income, investments returns, and other income sources
-- **Expense Tracking**: Log daily expenses with categories, dates, and descriptions
-- **Liability Management**: Track debts, loans, and recurring payments
+- Record income and expenses
+- Track transactions per wallet
+- Date filtering and balance summaries
 
 #### Categories & Organization
-- Pre-defined expense categories (Food, Transport, Housing, Entertainment, etc.)
-- Custom category creation
-- Transaction tagging for flexible organization
+- System categories (income/expense)
+- Custom categories
+- Category-based breakdowns
 
-#### Cash Flow Analytics
-- Monthly income vs. expense summaries
-- Category-wise spending breakdown
-- Net worth calculation (Assets - Liabilities)
-- Trend analysis over time periods
+#### Wallets
+- Wallet groups by category
+- Favorites and ordering
+- Category-specific wallet views
 
 #### Dashboard
-- Real-time financial overview
-- Recent transactions list
-- Budget progress indicators
-- Key financial metrics at a glance
+- Summary metrics
+- Net worth history
+- Recent activity
 
 ## 🛠️ Tech Stack
 
 ### Backend
-- **Framework**: Java 21 + Spring Boot 3.x
+- **Framework**: Java 25 + Spring Boot 4.0.1
 - **Database**: PostgreSQL
 - **ORM**: Spring Data JPA / Hibernate
 - **Security**: Spring Security + JWT
-- **API Documentation**: SpringDoc OpenAPI (Swagger)
+- **Migrations**: Flyway
 - **Build Tool**: Maven
 
 ### Frontend
-- **Framework**: React 18 with TypeScript
+- **Framework**: React 19 with TypeScript
 - **State Management**: Redux Toolkit
-- **UI Components**: Material-UI (MUI)
-- **Charts**: Recharts
+- **UI Components**: MUI 7
+- **Router**: React Router 7
 - **HTTP Client**: Axios
-- **Build Tool**: Vite
+- **Build Tool**: Vite (rolldown-vite)
 
 ### DevOps & Tools
 - **Containerization**: Docker & Docker Compose
-- **Database Migration**: Flyway
 - **Testing**: JUnit 5, Mockito, React Testing Library
 
 ## 📁 Project Structure
@@ -78,92 +130,80 @@ MoneyTracker/
 │   │   │       └── application.yml
 │   │   └── test/
 │   └── pom.xml
-├── frontend/                   # React application
+├── web/                        # React application
 │   ├── src/
 │   │   ├── components/         # Reusable UI components
 │   │   ├── features/           # Feature-based modules
 │   │   ├── hooks/              # Custom React hooks
 │   │   ├── pages/              # Page components
-│   │   ├── services/           # API services
+│   │   ├── api/                # API services
 │   │   ├── store/              # Redux store configuration
 │   │   ├── types/              # TypeScript type definitions
 │   │   └── utils/              # Utility functions
 │   ├── package.json
-│   └── vite.config.ts
+│   │   └── vite.config.ts
 ├── Documents/                  # Project documentation
 ├── docker-compose.yml
+├── docker-compose.override.yml
 └── README.md
-```
-
-## 🚦 Getting Started
-
-### Prerequisites
-- Java 21+
-- Node.js 18+
-- PostgreSQL 15+
-- Docker (optional)
-
-### Backend Setup
-
-```bash
-cd backend
-
-# Configure database in application.yml
-# Run the application
-./mvnw spring-boot:run
-```
-
-### Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-```
-
-### Using Docker
-
-```bash
-# Start all services
-docker-compose up -d
 ```
 
 ## 📊 API Endpoints (MVP)
 
+Base paths below are without a global `/api` prefix.
+
 ### Authentication
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/auth/register` | User registration |
-| POST | `/api/auth/login` | User login |
-| POST | `/api/auth/refresh` | Refresh access token |
+| POST | `/auth/register` | User registration |
+| POST | `/auth/login` | User login |
+| POST | `/auth/refresh` | Refresh access token |
+| POST | `/auth/logout` | Logout |
+| GET | `/auth/me` | Current user (token) |
+
+### Users
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/users/me` | Current user profile |
+| PUT | `/users/me` | Update current user |
+
+### Dashboard
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/dashboard` | Dashboard summary |
+| GET | `/dashboard/net-worth-history` | Net worth history by period |
+
+### Wallets
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/wallets` | List wallets |
+| GET | `/wallets/favorites` | Favorite wallets |
+| GET | `/wallets/{walletId}` | Wallet by ID |
+| POST | `/wallets` | Create wallet |
+| PUT | `/wallets/{walletId}` | Update wallet |
+| DELETE | `/wallets/{walletId}` | Delete wallet |
 
 ### Transactions
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/transactions` | List all transactions |
-| GET | `/api/transactions/{id}` | Get transaction by ID |
-| POST | `/api/transactions` | Create transaction |
-| PUT | `/api/transactions/{id}` | Update transaction |
-| DELETE | `/api/transactions/{id}` | Delete transaction |
+| GET | `/transactions` | List all transactions |
+| POST | `/transactions` | Create transaction |
+| DELETE | `/transactions/{transactionId}` | Delete transaction |
+| GET | `/wallets/{walletId}/transactions` | Wallet transactions |
+| GET | `/wallets/{walletId}/transactions/range` | Wallet transactions by date range |
+| GET | `/wallets/{walletId}/transactions/balance` | Wallet balance |
 
 ### Categories
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/categories` | List all categories |
-| POST | `/api/categories` | Create custom category |
-| PUT | `/api/categories/{id}` | Update category |
-| DELETE | `/api/categories/{id}` | Delete category |
-
-### Analytics
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/analytics/summary` | Financial summary |
-| GET | `/api/analytics/cashflow` | Cash flow report |
-| GET | `/api/analytics/categories` | Category breakdown |
+| GET | `/categories` | List all categories |
+| GET | `/categories/{categoryId}` | Category by ID |
+| GET | `/categories/income` | Income categories |
+| GET | `/categories/expense` | Expense categories |
+| GET | `/categories/system` | System categories |
+| POST | `/categories` | Create category |
+| PUT | `/categories/{categoryId}` | Update category |
+| DELETE | `/categories/{categoryId}` | Delete category |
 
 ## 🧪 Running Tests
 
@@ -175,7 +215,7 @@ cd backend
 
 ### Frontend
 ```bash
-cd frontend
+cd web
 npm run test
 ```
 
