@@ -1,0 +1,98 @@
+package com.moneytracker.backend.controller;
+
+import com.moneytracker.backend.dto.CreateTransactionRequest;
+import com.moneytracker.backend.dto.TransactionResponse;
+import com.moneytracker.backend.dto.UpdateTransactionRequest;
+import com.moneytracker.backend.entity.User;
+import com.moneytracker.backend.service.TransactionService;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.UUID;
+
+@RestController
+@RequestMapping
+public class TransactionController {
+
+    private final TransactionService transactionService;
+
+    public TransactionController(TransactionService transactionService) {
+        this.transactionService = transactionService;
+    }
+
+    @GetMapping("/transactions")
+    public ResponseEntity<Page<TransactionResponse>> getAllTransactions(
+            @AuthenticationPrincipal User user,
+            @PageableDefault(size = 20, sort = "transactionDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<TransactionResponse> transactions = transactionService.getAllTransactionsForUser(user, pageable);
+        return ResponseEntity.ok(transactions);
+    }
+
+    @GetMapping("/wallets/{walletId}/transactions")
+    public ResponseEntity<Page<TransactionResponse>> getWalletTransactions(
+            @PathVariable UUID walletId,
+            @AuthenticationPrincipal User user,
+            @PageableDefault(size = 20, sort = "transactionDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<TransactionResponse> transactions = transactionService.getTransactionsByWallet(walletId, user, pageable);
+        return ResponseEntity.ok(transactions);
+    }
+
+    @GetMapping("/wallets/{walletId}/transactions/range")
+    public ResponseEntity<Page<TransactionResponse>> getWalletTransactionsByDateRange(
+            @PathVariable UUID walletId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @AuthenticationPrincipal User user,
+            @PageableDefault(size = 20, sort = "transactionDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<TransactionResponse> transactions = transactionService.getTransactionsByDateRange(
+                walletId, user, startDate, endDate, pageable);
+        return ResponseEntity.ok(transactions);
+    }
+
+    @GetMapping("/wallets/{walletId}/transactions/balance")
+    public ResponseEntity<BigDecimal> getWalletBalance(@PathVariable UUID walletId,
+                                                        @AuthenticationPrincipal User user) {
+        BigDecimal balance = transactionService.getWalletBalance(walletId, user);
+        return ResponseEntity.ok(balance);
+    }
+
+    @GetMapping("/transactions/{transactionId}")
+    public ResponseEntity<TransactionResponse> getTransaction(@PathVariable UUID transactionId,
+                                                               @AuthenticationPrincipal User user) {
+        TransactionResponse transaction = transactionService.getTransactionById(transactionId, user);
+        return ResponseEntity.ok(transaction);
+    }
+
+    @PostMapping("/transactions")
+    public ResponseEntity<TransactionResponse> createTransaction(
+            @Valid @RequestBody CreateTransactionRequest request,
+            @AuthenticationPrincipal User user) {
+        TransactionResponse transaction = transactionService.createTransaction(request, user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(transaction);
+    }
+    
+    @PutMapping("/transactions/{transactionId}")
+    public ResponseEntity<TransactionResponse> updateTransaction(@PathVariable UUID transactionId,
+                                                                  @Valid @RequestBody UpdateTransactionRequest request,
+                                                                  @AuthenticationPrincipal User user) {
+        TransactionResponse transaction = transactionService.updateTransaction(transactionId, request, user);
+        return ResponseEntity.ok(transaction);
+    }
+
+    @DeleteMapping("/transactions/{transactionId}")
+    public ResponseEntity<Void> deleteTransaction(@PathVariable UUID transactionId,
+                                                   @AuthenticationPrincipal User user) {
+        transactionService.deleteTransaction(transactionId, user);
+        return ResponseEntity.noContent().build();
+    }
+}

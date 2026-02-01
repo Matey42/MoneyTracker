@@ -1,0 +1,59 @@
+@baseUrl = http://localhost:8080/api
+
+### 1) Register (creates user + returns tokens)
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "Password123",
+  "firstName": "Alex",
+  "lastName": "River"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+    client.global.set("refreshToken", response.body.refreshToken);
+%}
+
+### 2) Login (returns tokens)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "Password123"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+    client.global.set("refreshToken", response.body.refreshToken);
+%}
+
+### 3) Me (reads user info from access token)
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{accessToken}}
+
+### 4) Refresh (exchange refresh token for new tokens)
+# @name refresh
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+    client.global.set("refreshToken", response.body.refreshToken);
+%}
+
+### 5) Me using refreshed access token
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{accessToken}}
+
+### 6) Logout (invalidates refresh tokens for this user)
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{accessToken}}
